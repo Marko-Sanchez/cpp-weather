@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.14.0)
 
 # Get the CPPWEATHER_VERSION value from header file.
-file(STRINGS cppweather.h _raw_version_string REGEX "CPPWEATHER_VERSION \"([0-9]+\\.[0-9]+\\.[0-9]+)\"")
+file(STRINGS cppweather.h _raw_version_string REGEX "#define[ \t]+CPPWEATHER_VERSION[ \t]+\"([0-9]+\\.[0-9]+\\.[0-9]+)\"")
 
 # Extracts version number from _raw_version_string, since the above regex grabs the entire code line-statement.
-string(REGEX MATCH "([0-9]+\\.?)+" _cppweather_version "${_raw_string_version}")
+string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+" _cppweather_version "${_raw_version_string}")
 
 project(cppweather
     VERSION ${_cppweather_version}
