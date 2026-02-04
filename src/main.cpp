@@ -2,6 +2,7 @@
 #include <string_view>
 
 #include "cppweather/cppweather.h"
+#include "core/application.h"
 
 int main(int argc, char* argv[])
 {
@@ -10,6 +11,9 @@ int main(int argc, char* argv[])
         std::println("cppweather {} ({})", CPPWEATHER_VERSION, CPPWEATHER_GIT_HASH);
         return 0;
     }
+
+    Core::Application app("API_KEY", 8080);
+    app.Connect();
 
     return 0;
 }
