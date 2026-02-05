@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14.0)
+cmake_minimum_required(VERSION 3.25.0)
 
 project(cppweather
     VERSION "0.2.1"
