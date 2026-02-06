@@ -1,7 +1,6 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
-#include <atomic>
 #include <thread>
 #include <cpp-httplib/httplib.h>
 #include <json/include/nlohmann/json.hpp>
@@ -25,30 +24,29 @@ class Network
 private:
     const std::string API_ENDPOINT{"/v1/forecast"};
     const std::chrono::seconds UPDATE_INTERVAL{60};
-    std::chrono::steady_clock::time_point m_nextUpdate = std::chrono::steady_clock::now();
 
-    std::mutex m_weatherMutex;
-    std::atomic<bool> m_isRunning;
+    std::mutex m_cvMutex;
+    std::condition_variable_any m_cv;
 
     httplib::Client m_client;
     httplib::Params m_weatherParams;
     httplib::Headers m_headers;
 
-    WeatherResults m_weatherResults;
+    std::atomic<std::shared_ptr<const WeatherResults>> m_weatherResults;
 
     std::jthread m_thread;
 
     std::string ParseContents(std::string content);
     std::string GetWeather();
 
-    void ThreadLoop();
+    void ThreadLoop(std::stop_token st);
 
 public:
     Network(const std::string& cli, const httplib::Params& params = {});
-    ~Network();
+    ~Network() = default;
 
-    WeatherResults GetLatestWeather();
-    void CloseConnection();
+    std::shared_ptr<const WeatherResults> GetLatestWeather() const;
+    void ForceRefresh();
 };
 }
 #endif
