@@ -7,6 +7,8 @@ project(cppweather
     HOMEPAGE_URL "https://github.com/Marko-Sanchez/cpp-weather"
 )
 
+include(CTest)
+
 # Set CPP standard.
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
