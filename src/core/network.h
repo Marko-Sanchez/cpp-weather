@@ -2,8 +2,8 @@
 #define NETWORK_H
 
 #include <thread>
-#include <cpp-httplib/httplib.h>
-#include <json/include/nlohmann/json.hpp>
+#include <httplib.h>
+#include <nlohmann/json.hpp>
 
 #include "cppweather/cppweather.h"
 

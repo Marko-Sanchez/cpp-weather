@@ -31,6 +31,7 @@ m_weatherResults(nullptr)
     });
 }
 
+// TODO: more complicated json parse to be done in utility/weatherparser.h
 std::string Network::ParseContents(std::string content)
 {
     auto json = nlohmann::json::parse(content);
