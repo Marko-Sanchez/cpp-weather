@@ -2,19 +2,19 @@
 #define APPLICATION_H
 
 #include <string>
-#include <cpp-httplib/httplib.h>
+#include "core/network.h"
 
 namespace Core
 {
 class Application
 {
 private:
-    httplib::Client cli;
+    Core::Network m_weatherClient;
 
 public:
     Application(const std::string& host, const int port);
 
-    void Connect();
+    void GetWebContents();
     void Run();
 };
 }// namespace Core

@@ -1,20 +1,39 @@
 #include "application.h"
 
+#include <chrono>
 #include <print>
 #include <thread>
-#include <chrono>
 
 namespace Core
 {
 Application::Application(const std::string& host, const int port):
-cli(host)
+m_weatherClient(host)
 {}
 
-void Application::Connect()
+void Application::GetWebContents()
 {
-    auto res = cli.Get("API_REQUEST");
-    std::println("status {}", res->status);
+    // Temoprary: to fast for thread to process data.
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    std::this_thread::sleep_for(std::chrono::seconds(16));
+    auto ptr = m_weatherClient.GetLatestWeather();
+    if (ptr)
+    {
+        std::println("{}", ptr->weather);
+    }
+}
+
+void Application::Run()
+{
+    // bool isHandled{false};
+    // while (!isHandled) // If a certain key is pressed: Exit.
+    // {
+        // Get Network Results...
+        // Output every minute, returns a bool if still in
+        // timer.
+        // this->GetWebContents();
+
+        // If isHeadless not true draw gui.
+        // isHandled = true;
+    // }
 }
 }// namespace Core
