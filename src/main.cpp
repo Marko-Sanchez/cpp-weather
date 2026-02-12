@@ -12,8 +12,8 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    Core::Application app("API_KEY", 8080);
-    app.Connect();
+    Core::Application app("http://api.open-meteo.com", 8080);
+    app.GetWebContents();
 
     return 0;
 }
