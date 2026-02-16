@@ -6,6 +6,7 @@
 #include <nlohmann/json.hpp>
 
 #include "cppweather/cppweather.h"
+#include "utility/weatherparser.h"
 
 namespace Core
 {
@@ -36,7 +37,6 @@ private:
 
     std::jthread m_thread;
 
-    std::string ParseContents(std::string content);
     std::string GetWeather();
 
     void ThreadLoop(std::stop_token st);

@@ -17,6 +17,8 @@ m_weatherResults(nullptr)
         m_weatherParams.emplace("longitude", "-122.133615");
 
         m_weatherParams.emplace("current", "temperature_2m");
+        m_weatherParams.emplace("daily", "temperature_2m_mean");
+        m_weatherParams.emplace("forecast_days", "9");
         m_weatherParams.emplace("temperature_unit", "fahrenheit");
         m_weatherParams.emplace("timezone", "America/Los_Angeles");
     }
@@ -31,17 +33,6 @@ m_weatherResults(nullptr)
     });
 }
 
-// TODO: more complicated json parse to be done in utility/weatherparser.h
-std::string Network::ParseContents(std::string content)
-{
-    auto json = nlohmann::json::parse(content);
-
-    std::string tempUnits = json.at("current_units").at("temperature_2m").get<std::string>();
-    double temperature = json.at("current").at("temperature_2m").get<double>();
-
-    return std::format("temperature: {} {}", temperature, tempUnits);
-}
-
 std::string Network::GetWeather()
 {
     auto result = m_client.Get(API_ENDPOINT, m_weatherParams, m_headers);
@@ -53,8 +44,7 @@ std::string Network::GetWeather()
             return "No Json value returned.";
         }
 
-
-        return this->ParseContents(result->body);
+        return utility::ParseContents(result->body);
     }
 
     return result->body;

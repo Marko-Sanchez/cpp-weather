@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.25.0)
 
 project(cppweather
-    VERSION "0.2.1"
+    VERSION "0.2.2"
     LANGUAGES CXX
     DESCRIPTION "A C++ desktop weather application."
     HOMEPAGE_URL "https://github.com/Marko-Sanchez/cpp-weather"
@@ -36,5 +36,11 @@ configure_file(
     ${PROJECT_SOURCE_DIR}/cppweather.h.in
     ${CMAKE_BINARY_DIR}/cppweather/cppweather.h
 )
+
+add_subdirectory(${PROJECT_SOURCE_DIR}/vendors/json
+                ${CMAKE_BINARY_DIR}/nlohmann_json)
+
+add_subdirectory(${PROJECT_SOURCE_DIR}/vendors/cpp-httplib
+                ${CMAKE_BINARY_DIR}/cpp-httplib)
 
 add_subdirectory(src)
