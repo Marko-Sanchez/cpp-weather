@@ -37,6 +37,9 @@ configure_file(
     ${CMAKE_BINARY_DIR}/cppweather/cppweather.h
 )
 
+add_subdirectory(${PROJECT_SOURCE_DIR}/vendors/raylib)
+add_subdirectory(${PROJECT_SOURCE_DIR}/vendors/raylib-cpp)
+
 add_subdirectory(${PROJECT_SOURCE_DIR}/vendors/json
                 ${CMAKE_BINARY_DIR}/nlohmann_json)
 
