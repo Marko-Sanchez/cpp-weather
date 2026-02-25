@@ -1,39 +1,52 @@
 #include "application.h"
+#include "raylib.h"
 
-#include <chrono>
 #include <print>
-#include <thread>
 
 namespace Core
 {
-Application::Application(const std::string& host, const int port):
-m_weatherClient(host)
+Application::Application(const std::string windowname, const std::string version):
+m_windowname(windowname),
+m_applicationversion(version)
 {}
 
 void Application::GetWebContents()
 {
-    // Temoprary: to fast for thread to process data.
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-
-    auto ptr = m_weatherClient.GetLatestWeather();
-    if (ptr)
+    if (auto ptr{m_weatherclient.GetLatestWeather()}; ptr->timestamp != m_lastrequesttime)
     {
         std::println("{}", ptr->weather);
+        m_lastrequesttime = ptr->timestamp;
     }
 }
 
 void Application::Run()
 {
-    // bool isHandled{false};
-    // while (!isHandled) // If a certain key is pressed: Exit.
-    // {
-        // Get Network Results...
-        // Output every minute, returns a bool if still in
-        // timer.
+    const int screenWidth{512};
+    const int screenHeight{1024};
+
+    std::string titlename{std::format("{} (v{})", m_windowname, m_applicationversion)};
+    InitWindow(screenWidth, screenHeight, titlename.c_str());
+
+    Texture2D texture = LoadTexture("resources/images/squiggle2.png");
+
+    int textureWidth{MeasureText("cppweather", 42)};
+    int textX{(screenWidth - textureWidth) / 2};
+    int textY{screenHeight / 2};
+
+    SetTargetFPS(45);
+    while (!WindowShouldClose())
+    {
+
         // this->GetWebContents();
 
-        // If isHeadless not true draw gui.
-        // isHandled = true;
-    // }
+        BeginDrawing();
+            ClearBackground(RAYWHITE);
+            DrawTexture(texture, screenWidth / 2 - texture.width / 2, 0, WHITE);
+            DrawText("cppweather", textX, textY, 42, BLACK);
+        EndDrawing();
+    }
+
+    UnloadTexture(texture);
+    CloseWindow();
 }
 }// namespace Core

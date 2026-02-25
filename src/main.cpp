@@ -12,8 +12,8 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    Core::Application app("http://api.open-meteo.com", 8080);
-    app.GetWebContents();
+    Core::Application app("cppweather", CPPWEATHER_VERSION);
+    app.Run();
 
     return 0;
 }
