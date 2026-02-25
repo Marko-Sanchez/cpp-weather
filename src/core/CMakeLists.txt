@@ -17,5 +17,4 @@ target_link_libraries(cppweather-core
         Threads::Threads
         httplib::httplib
         raylib
-        raylib_cpp
 )
