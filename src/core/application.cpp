@@ -1,7 +1,9 @@
 #include "application.h"
-#include "raylib.h"
 
+#include <raylib.h>
 #include <print>
+
+#include "layers/TitleLayer.h"
 
 namespace Core
 {
@@ -10,12 +12,20 @@ m_windowname(windowname),
 m_applicationversion(version)
 {}
 
+Application::~Application()
+{
+    m_layerstack.clear();
+    CloseWindow();
+}
+
+/*
+ * Invoked once when '--no-gui' is passed as an argument.
+ */
 void Application::GetWebContents()
 {
-    if (auto ptr{m_weatherclient.GetLatestWeather()}; ptr->timestamp != m_lastrequesttime)
+    if (auto ptr{m_weatherclient.GetLatestWeather()}; ptr)
     {
         std::println("{}", ptr->weather);
-        m_lastrequesttime = ptr->timestamp;
     }
 }
 
@@ -26,27 +36,20 @@ void Application::Run()
 
     std::string titlename{std::format("{} (v{})", m_windowname, m_applicationversion)};
     InitWindow(screenWidth, screenHeight, titlename.c_str());
-
-    Texture2D texture = LoadTexture("resources/images/squiggle2.png");
-
-    int textureWidth{MeasureText("cppweather", 42)};
-    int textX{(screenWidth - textureWidth) / 2};
-    int textY{screenHeight / 2};
+    this->PushLayer<Layers::TitleLayer>();
 
     SetTargetFPS(45);
     while (!WindowShouldClose())
     {
-
-        // this->GetWebContents();
-
-        BeginDrawing();
-            ClearBackground(RAYWHITE);
-            DrawTexture(texture, screenWidth / 2 - texture.width / 2, 0, WHITE);
-            DrawText("cppweather", textX, textY, 42, BLACK);
-        EndDrawing();
+        this->RenderLayers();
     }
+}
 
-    UnloadTexture(texture);
-    CloseWindow();
+void Application::RenderLayers()
+{
+    for (const auto& layer: m_layerstack)
+    {
+        layer->OnRender();
+    }
 }
 }// namespace Core

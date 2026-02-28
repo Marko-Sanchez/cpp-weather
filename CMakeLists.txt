@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.25.0)
 
 project(cppweather
-    VERSION "0.2.2"
+    VERSION "0.2.3"
     LANGUAGES CXX
     DESCRIPTION "A C++ desktop weather application."
     HOMEPAGE_URL "https://github.com/Marko-Sanchez/cpp-weather"
@@ -38,7 +38,6 @@ configure_file(
 )
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/vendors/raylib)
-add_subdirectory(${PROJECT_SOURCE_DIR}/vendors/raylib-cpp)
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/vendors/json
                 ${CMAKE_BINARY_DIR}/nlohmann_json)
