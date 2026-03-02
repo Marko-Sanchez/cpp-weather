@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.25.0)
 
 project(cppweather
-    VERSION "0.2.3"
+    VERSION "0.2.4"
     LANGUAGES CXX
     DESCRIPTION "A C++ desktop weather application."
     HOMEPAGE_URL "https://github.com/Marko-Sanchez/cpp-weather"
