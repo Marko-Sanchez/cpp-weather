@@ -1,3 +1,4 @@
+add_subdirectory(networks)
 add_subdirectory(layers)
 add_subdirectory(utility)
 add_subdirectory(core)

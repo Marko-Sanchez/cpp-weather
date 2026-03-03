@@ -13,9 +13,8 @@ target_include_directories(cppweather-core
 
 target_link_libraries(cppweather-core
     PUBLIC
+        cppweather-networks
         cppweather-layers
-        cppweather-utility
         # Always require threads.
         Threads::Threads
-        httplib::httplib
 )
