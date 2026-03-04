@@ -42,7 +42,9 @@ public:
     Network(std::optional<std::pair<std::string, std::string>> citystate = {});
     ~Network() = default;
 
+    void GetGeographicCoordinates() const;
     std::shared_ptr<const WeatherResults> GetLatestWeather() const;
+
     void ForceRefresh();
 };
 }

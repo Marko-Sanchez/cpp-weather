@@ -1,6 +1,5 @@
 #include "geonetwork.h"
 
-#include <print>
 #include <httplib.h>
 
 #include "cppweather/cppweather.h"
@@ -8,7 +7,7 @@
 
 namespace network
 {
-GeoNetwork::GeoNetwork(const std::string city, const std::string state):
+GeoNetwork::GeoNetwork(const std::string& city, const std::string& state):
 m_state(state),
 m_geoclient(WEB_ADDRESS)
 {
@@ -22,33 +21,31 @@ m_geoclient(WEB_ADDRESS)
     m_headers.emplace("Accept", "application/json");
 }
 
-std::expected<Location, std::string> GeoNetwork::GetGeographicCordinates()
+std::expected<Location, std::string> GeoNetwork::GetGeographicCoordinates()
 {
     auto result = m_geoclient.Get(API_ENDPOINT, m_geoparams, m_headers);
     if (result && result->status == httplib::StatusCode::OK_200)
     {
         auto type = result->get_header_value("Content-type");
-        if (type.find("application/json") == std::string::npos)
+        if (type.empty() || type.find("application/json") == std::string::npos)
         {
-            return std::unexpected("No Json value returned.");
+            return std::unexpected("Unexpected Content-type returned: " + type);
         }
 
         auto pair = utility::GeoParseContents(m_state, result->body);
+        if (!pair)
+        {
+            return std::unexpected(pair.error());
+        }
+
         return Location{pair->first, pair->second};
     }
 
     return std::unexpected("Unable to retrieve latitude/longitude.");
 }
 
-std::optional<Location> GeoNetwork::GetCoordinates()
+std::expected<Location, std::string> GeoNetwork::GetCoordinates()
 {
-    auto cords = this->GetGeographicCordinates();
-    if (cords)
-    {
-        return cords.value();
-    }
-
-    std::println("{}", cords.error());
-    return std::nullopt;
+    return this->GetGeographicCoordinates();
 }
 }// namespace network

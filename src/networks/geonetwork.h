@@ -26,12 +26,12 @@ private:
     httplib::Params m_geoparams;
     httplib::Headers m_headers;
 
-    std::expected<Location, std::string> GetGeographicCordinates();
+    std::expected<Location, std::string> GetGeographicCoordinates();
 
 public:
-    GeoNetwork(const std::string city, const std::string state);
+    GeoNetwork(const std::string& city, const std::string& state);
 
-    std::optional<Location> GetCoordinates();
+    std::expected<Location, std::string> GetCoordinates();
 };
 }// namespace network
 #endif

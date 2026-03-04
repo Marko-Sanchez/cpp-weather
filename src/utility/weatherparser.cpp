@@ -26,25 +26,37 @@ std::string ParseContents(const std::string& contents)
     return comb;
 };
 
-std::expected<std::pair<std::string, std::string>, std::string> GeoParseContents(const std::string& state, const std::string& contents)
+std::expected<PSS, std::string> GeoParseContents(const std::string& state, const std::string& contents)
 {
-    auto json = nlohmann::json::parse(contents);
-    if (json.contains("error"))
+    try
     {
-        return std::unexpected{"Json parsing error."};
-    }
-
-    for (const auto& result: json.at("results"))
-    {
-        if (result.at("admin1").get<std::string>() == state)
+        auto json = nlohmann::json::parse(contents);
+        if (!json.contains("results"))
         {
-            auto latI = result.at("latitude").get<int>();
-            auto lonI = result.at("longitude").get<int>();
+            if (json.contains("reason"))
+            {
+                return std::unexpected(json["reason"].get<std::string>());
+            }
 
-            return std::make_pair(std::to_string(latI), std::to_string(lonI));
+            return std::unexpected("Unkown error: missing 'results' field.");
+        }
+
+        for (const auto& result: json["results"])
+        {
+            if (result.contains("admin1") && result["admin1"].get<std::string>() == state)
+            {
+                auto latD = result.at("latitude").get<double>();
+                auto lonD = result.at("longitude").get<double>();
+
+                return std::make_pair(std::format("{:.6f}", latD), std::format("{:.6f}", lonD));
+            }
         }
     }
+    catch(const nlohmann::json::exception& e)
+    {
+        return std::unexpected(std::format("JSON parse failed: {}", e.what()));
+    }
 
-    return std::unexpected{"Could not find correct state."};
+    return std::unexpected{std::format("Could not find state: {}", state)};
 }
 }// namespace utility

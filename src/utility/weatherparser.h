@@ -6,7 +6,9 @@
 
 namespace utility
 {
+    using PSS = std::pair<std::string, std::string>;
+
     std::string ParseContents(const std::string& contents);
-    std::expected<std::pair<std::string, std::string>, std::string> GeoParseContents(const std::string& state, const std::string& contents);
+    std::expected<PSS, std::string> GeoParseContents(const std::string& state, const std::string& contents);
 }
 #endif

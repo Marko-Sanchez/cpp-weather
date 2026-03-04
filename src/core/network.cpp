@@ -13,13 +13,13 @@ m_weatherResults(nullptr)
     if (citystate)
     {
         m_geonetwork = std::make_unique<network::GeoNetwork>(citystate->first, citystate->second);
-        auto location = m_geonetwork->GetCoordinates();
-        if (location)
+        if (const auto location = m_geonetwork->GetCoordinates(); location)
         {
-            m_weathernetwork = std::make_unique<network::WeatherNetwork>(location);
+            m_weathernetwork = std::make_unique<network::WeatherNetwork>(location.value());
         }
     }
-    else
+
+    if (!m_weathernetwork)
     {
         m_weathernetwork = std::make_unique<network::WeatherNetwork>();
     }
@@ -49,8 +49,7 @@ void Network::ThreadLoop(std::stop_token stoptoken)
         untilNextUpdate += UPDATE_INTERVAL;
 
         // Process request.
-        const auto wr = m_weathernetwork->GetWeather();
-        if (wr)
+        if (const auto wr = m_weathernetwork->GetWeather(); wr)
         {
             auto snapshot = std::make_shared<WeatherResults>(WeatherResults{
                 .weather = wr.value(),
