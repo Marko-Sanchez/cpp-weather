@@ -35,14 +35,14 @@ std::expected<std::string, std::string> WeatherNetwork::GetWeather()
     if (result && result->status == httplib::StatusCode::OK_200)
     {
         auto type = result->get_header_value("Content-type");
-        if (type.find("application/json") == std::string::npos)
+        if (type.empty() || type.find("application/json") == std::string::npos)
         {
-            return std::unexpected("No Json value returned.");
+            return std::unexpected(std::format("Unexpected Content-type returned: {}", type));
         }
 
-        return utility::ParseContents(result->body);
+        return utility::WeatherParseContents(result->body);
     }
 
-    return std::unexpected(httplib::to_string(result.error()));
+    return std::unexpected(std::format("HTTP error: {}", httplib::to_string(result.error())));
 }
 }// namespace network

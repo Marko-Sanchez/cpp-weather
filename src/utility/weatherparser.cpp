@@ -3,28 +3,37 @@
 
 namespace utility
 {
-std::string ParseContents(const std::string& contents)
+std::expected<std::string, std::string> WeatherParseContents(const std::string& contents)
 {
-    auto json = nlohmann::json::parse(contents);
-    if (json.contains("error"))
+    try
     {
-        return json.at("reasons").get<std::string>();
+        auto json = nlohmann::json::parse(contents);
+        if (json.contains("error"))
+        {
+            return std::unexpected(json["reason"].get<std::string>());
+        }
+
+        double temperature = json.at("current").at("temperature_2m").get<double>();
+        std::string tempUnits = json.at("current_units").at("temperature_2m").get<std::string>();
+
+        const auto time = json.at("daily").at("time");
+        const auto temp = json.at("daily").at("temperature_2m_mean");
+
+        std::string comb{std::format("temperature: {} {}\n\n", temperature, tempUnits)};
+
+        // 0th-index is current day, skip.
+        for (size_t i{1}; i < time.size(); ++i)
+        {
+            comb += std::format("temperature from {} at {}{}\n", time[i].get<std::string>(), temp[i].get<int>(), tempUnits);
+        }
+
+        return comb;
     }
-
-    double temperature = json.at("current").at("temperature_2m").get<double>();
-    std::string tempUnits = json.at("current_units").at("temperature_2m").get<std::string>();
-
-    const auto time = json.at("daily").at("time");
-    const auto temp = json.at("daily").at("temperature_2m_mean");
-
-    std::string comb{std::format("temperature: {} {}\n\n", temperature, tempUnits)};
-    for (size_t i{1}; i < time.size(); ++i)
+    catch(const nlohmann::json::exception& e)
     {
-        comb += std::format("temperature from {} at {}{}\n", time[i].get<std::string>(), temp[i].get<int>(), tempUnits);
+        return std::unexpected(std::format("JSON parse failed: {}", e.what()));
     }
-
-    return comb;
-};
+}
 
 std::expected<PSS, std::string> GeoParseContents(const std::string& state, const std::string& contents)
 {
