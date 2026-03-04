@@ -1,53 +1,33 @@
+#include "core/network.h"
+
 #include <chrono>
-#include <core/network.h>
+#include <httplib.h>
+#include <memory>
 
 namespace Core
 {
-Network::Network(const std::string& cli, const httplib::Params& params):
-m_client(cli),
+Network::Network(std::optional<std::pair<std::string, std::string>> citystate):
 m_weatherResults(nullptr)
 {
-    if (!params.empty())
+    // if citystate is defined call geonetwork, else continue and call weathernetwork.
+    if (citystate)
     {
-        m_weatherParams = params;
+        m_geonetwork = std::make_unique<network::GeoNetwork>(citystate->first, citystate->second);
+        auto location = m_geonetwork->GetCoordinates();
+        if (location)
+        {
+            m_weathernetwork = std::make_unique<network::WeatherNetwork>(location);
+        }
     }
     else
     {
-        m_weatherParams.emplace("latitude", "47.6446751");
-        m_weatherParams.emplace("longitude", "-122.133615");
-
-        m_weatherParams.emplace("current", "temperature_2m");
-        m_weatherParams.emplace("daily", "temperature_2m_mean");
-        m_weatherParams.emplace("forecast_days", "9");
-        m_weatherParams.emplace("temperature_unit", "fahrenheit");
-        m_weatherParams.emplace("timezone", "America/Los_Angeles");
+        m_weathernetwork = std::make_unique<network::WeatherNetwork>();
     }
-
-    // Identify who we are and only allow for json response.
-    m_headers.emplace("User-Agent", std::format("cpp-weather/{}", CPPWEATHER_VERSION));
-    m_headers.emplace("Accept", "application/json");
 
     m_thread = std::jthread([this](std::stop_token st)
     {
         this->ThreadLoop(st);
     });
-}
-
-std::string Network::GetWeather()
-{
-    auto result = m_client.Get(API_ENDPOINT, m_weatherParams, m_headers);
-    if (result && result->status == httplib::StatusCode::OK_200)
-    {
-        auto type = result->get_header_value("Content-type");
-        if (type.find("application/json") == std::string::npos)
-        {
-            return "No Json value returned.";
-        }
-
-        return utility::ParseContents(result->body);
-    }
-
-    return result->body;
 }
 
 /*
@@ -61,11 +41,6 @@ std::shared_ptr<const WeatherResults> Network::GetLatestWeather() const
     return m_weatherResults.load();
 }
 
-void Network::ForceRefresh()
-{
-    m_cv.notify_all();
-}
-
 void Network::ThreadLoop(std::stop_token stoptoken)
 {
     auto untilNextUpdate{std::chrono::steady_clock::now()};
@@ -74,11 +49,11 @@ void Network::ThreadLoop(std::stop_token stoptoken)
         untilNextUpdate += UPDATE_INTERVAL;
 
         // Process request.
-        const auto wr = GetWeather();
-        if (!wr.empty())
+        const auto wr = m_weathernetwork->GetWeather();
+        if (wr)
         {
             auto snapshot = std::make_shared<WeatherResults>(WeatherResults{
-                .weather = wr,
+                .weather = wr.value(),
                 .timestamp = std::chrono::steady_clock::now()
                 });
 
@@ -89,5 +64,10 @@ void Network::ThreadLoop(std::stop_token stoptoken)
         std::unique_lock lck(m_cvMutex);
         m_cv.wait_until(lck, stoptoken, untilNextUpdate, [] {return false;});
     }
+}
+
+void Network::ForceRefresh()
+{
+    m_cv.notify_all();
 }
 }// namespace Core

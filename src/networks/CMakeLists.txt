@@ -1,6 +1,8 @@
 add_library(cppweather-networks
-    GeoNetwork.cpp
-    GeoNetwork.h
+    geonetwork.cpp
+    geonetwork.h
+    weathernetwork.cpp
+    weathernetwork.h
 )
 
 target_include_directories(cppweather-networks

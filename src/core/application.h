@@ -16,12 +16,12 @@ private:
     const std::string m_windowname;
     const std::string m_applicationversion;
 
-    Core::Network m_weatherclient;
+    Core::Network m_network;
 
     std::list<std::unique_ptr<Layers::Layer>> m_layerstack;
 
 public:
-    Application(const std::string windowname, const std::string version);
+    Application(const std::string windowname, const std::string version, std::optional<std::pair<std::string, std::string>> stringlocation = {});
     ~Application();
 
     void GetWebContents();

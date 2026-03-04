@@ -15,14 +15,14 @@ int main(int argc, char* argv[])
     }
     else if (args.nogui)
     {
-        Core::Application app("cppweather", CPPWEATHER_VERSION);
+        Core::Application app("cppweather", CPPWEATHER_VERSION, args.location);
         app.GetWebContents();
 
         return 0;
     }
     else
     {
-        Core::Application app("cppweather", CPPWEATHER_VERSION);
+        Core::Application app("cppweather", CPPWEATHER_VERSION, args.location);
         app.Run();
 
         return 0;

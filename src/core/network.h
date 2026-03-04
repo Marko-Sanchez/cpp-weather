@@ -2,18 +2,19 @@
 #define NETWORK_H
 
 #include <thread>
-#include <httplib.h>
-#include <nlohmann/json.hpp>
 
-#include "cppweather/cppweather.h"
-#include "utility/weatherparser.h"
+#include "networks/geonetwork.h"
+#include "networks/weathernetwork.h"
 
 namespace Core
 {
 struct WeatherResults
 {
     std::string weather;
+    std::string errormessage;
     std::chrono::steady_clock::time_point timestamp;
+
+    bool iserror;
 };
 
 /*
@@ -23,26 +24,22 @@ struct WeatherResults
 class Network
 {
 private:
-    const std::string API_ENDPOINT{"/v1/forecast"};
     const std::chrono::seconds UPDATE_INTERVAL{60};
+
+    std::unique_ptr<network::GeoNetwork> m_geonetwork;
+    std::unique_ptr<network::WeatherNetwork> m_weathernetwork;
 
     std::mutex m_cvMutex;
     std::condition_variable_any m_cv;
-
-    httplib::Client m_client;
-    httplib::Params m_weatherParams;
-    httplib::Headers m_headers;
 
     std::atomic<std::shared_ptr<const WeatherResults>> m_weatherResults;
 
     std::jthread m_thread;
 
-    std::string GetWeather();
-
     void ThreadLoop(std::stop_token st);
 
 public:
-    Network(const std::string& cli, const httplib::Params& params = {});
+    Network(std::optional<std::pair<std::string, std::string>> citystate = {});
     ~Network() = default;
 
     std::shared_ptr<const WeatherResults> GetLatestWeather() const;

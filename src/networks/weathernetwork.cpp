@@ -1,0 +1,48 @@
+#include "weathernetwork.h"
+
+#include "cppweather/cppweather.h"
+#include "utility/weatherparser.h"
+
+namespace network
+{
+WeatherNetwork::WeatherNetwork(std::optional<Location> coordinates):
+m_weatherclient(WEB_ADDRESS)
+{
+    if (coordinates)
+    {
+        m_weatherparams.emplace("latitude", coordinates->latitude);
+        m_weatherparams.emplace("longitude", coordinates->longitude);
+    }
+    else // default to microsoft headquaters: redmond, wa.
+    {
+        m_weatherparams.emplace("latitude", "47.6446751");
+        m_weatherparams.emplace("longitude", "-122.133615");
+    }
+
+    m_weatherparams.emplace("current", "temperature_2m");
+    m_weatherparams.emplace("daily", "temperature_2m_mean");
+    m_weatherparams.emplace("forecast_days", "9");
+    m_weatherparams.emplace("temperature_unit", "fahrenheit");
+    m_weatherparams.emplace("timezone", "America/Los_Angeles");
+
+    m_headers.emplace("User-Agent", std::format("cpp-weather/{}", CPPWEATHER_VERSION));
+    m_headers.emplace("Accept", "application/json");
+}
+
+std::expected<std::string, std::string> WeatherNetwork::GetWeather()
+{
+    auto result = m_weatherclient.Get(API_ENDPOINT, m_weatherparams, m_headers);
+    if (result && result->status == httplib::StatusCode::OK_200)
+    {
+        auto type = result->get_header_value("Content-type");
+        if (type.find("application/json") == std::string::npos)
+        {
+            return std::unexpected("No Json value returned.");
+        }
+
+        return utility::ParseContents(result->body);
+    }
+
+    return std::unexpected(httplib::to_string(result.error()));
+}
+}// namespace network

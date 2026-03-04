@@ -1,21 +1,27 @@
 #include "application.h"
 
+#include <chrono>
 #include <raylib.h>
 #include <print>
+#include <thread>
 
 #include "layers/TitleLayer.h"
 
 namespace Core
 {
-Application::Application(const std::string windowname, const std::string version):
+Application::Application(const std::string windowname, const std::string version, std::optional<std::pair<std::string, std::string>> stringlocation):
 m_windowname(windowname),
-m_applicationversion(version)
+m_applicationversion(version),
+m_network(stringlocation)
 {}
 
 Application::~Application()
 {
     m_layerstack.clear();
-    CloseWindow();
+    if (IsWindowReady())
+    {
+        CloseWindow();
+    }
 }
 
 /*
@@ -23,7 +29,8 @@ Application::~Application()
  */
 void Application::GetWebContents()
 {
-    if (auto ptr{m_weatherclient.GetLatestWeather()}; ptr)
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    if (auto ptr{m_network.GetLatestWeather()}; ptr)
     {
         std::println("{}", ptr->weather);
     }
