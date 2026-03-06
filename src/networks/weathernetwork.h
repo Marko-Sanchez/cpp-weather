@@ -22,6 +22,7 @@ public:
     WeatherNetwork(std::optional<Location> coordinates = {});
 
     std::expected<std::string, std::string> GetWeather();
+    httplib::Client& GetClient();
 };
 }// network
 #endif

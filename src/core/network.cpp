@@ -1,8 +1,11 @@
 #include "core/network.h"
 
 #include <chrono>
-#include <httplib.h>
 #include <memory>
+
+#include <httplib.h>
+
+#include "networks/networklogging.h"
 
 namespace Core
 {
@@ -23,6 +26,14 @@ m_weatherResults(nullptr)
     {
         m_weathernetwork = std::make_unique<network::WeatherNetwork>();
     }
+
+#if ENABLE_LOGGING
+    m_logging = std::make_shared<utility::LogFile>("resources/logging/log.txt");
+#endif
+
+    // note: the above geo call is made before logging is performed.
+    network::AttachLoggers(m_geonetwork->GetClient(), m_logging, "GEO");
+    network::AttachLoggers(m_weathernetwork->GetClient(), m_logging, "WEATHER");
 
     m_thread = std::jthread([this](std::stop_token st)
     {

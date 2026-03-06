@@ -3,6 +3,7 @@
 
 #include <thread>
 
+#include "utility/logfile.h"
 #include "networks/geonetwork.h"
 #include "networks/weathernetwork.h"
 
@@ -26,6 +27,7 @@ class Network
 private:
     const std::chrono::seconds UPDATE_INTERVAL{60};
 
+    std::shared_ptr<utility::LogFile> m_logging;
     std::unique_ptr<network::GeoNetwork> m_geonetwork;
     std::unique_ptr<network::WeatherNetwork> m_weathernetwork;
 

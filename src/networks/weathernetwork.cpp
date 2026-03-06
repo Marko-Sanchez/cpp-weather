@@ -45,4 +45,9 @@ std::expected<std::string, std::string> WeatherNetwork::GetWeather()
 
     return std::unexpected(std::format("HTTP error: {}", httplib::to_string(result.error())));
 }
+
+httplib::Client& WeatherNetwork::GetClient()
+{
+    return m_weatherclient;
+}
 }// namespace network

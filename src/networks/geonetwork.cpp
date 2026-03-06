@@ -48,4 +48,9 @@ std::expected<Location, std::string> GeoNetwork::GetCoordinates()
 {
     return this->GetGeographicCoordinates();
 }
+
+httplib::Client& GeoNetwork::GetClient()
+{
+    return m_geoclient;
+}
 }// namespace network

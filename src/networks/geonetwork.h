@@ -32,6 +32,7 @@ public:
     GeoNetwork(const std::string& city, const std::string& state);
 
     std::expected<Location, std::string> GetCoordinates();
+    httplib::Client& GetClient();
 };
 }// namespace network
 #endif
