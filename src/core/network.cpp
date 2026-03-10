@@ -32,7 +32,10 @@ m_weatherResults(nullptr)
 #endif
 
     // note: the above geo call is made before logging is performed.
-    network::AttachLoggers(m_geonetwork->GetClient(), m_logging, "GEO");
+    if (m_geonetwork)
+    {
+        network::AttachLoggers(m_geonetwork->GetClient(), m_logging, "GEO");
+    }
     network::AttachLoggers(m_weathernetwork->GetClient(), m_logging, "WEATHER");
 
     m_thread = std::jthread([this](std::stop_token st)
