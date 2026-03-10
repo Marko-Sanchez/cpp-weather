@@ -21,6 +21,7 @@ public:
     TitleLayer();
     ~TitleLayer();
 
+    virtual void OnEvent() override;
     virtual void OnRender() override;
 };
 }

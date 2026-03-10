@@ -5,7 +5,8 @@
 #include <print>
 #include <thread>
 
-#include "layers/TitleLayer.h"
+#include "layers/layer.h"
+#include "layers/titlelayer.h"
 
 namespace Core
 {
@@ -43,15 +44,62 @@ void Application::Run()
 
     std::string titlename{std::format("{} (v{})", m_windowname, m_applicationversion)};
     InitWindow(screenWidth, screenHeight, titlename.c_str());
+
+    m_queuedtransition = std::make_shared<std::optional<Layers::TransitionLayer>>(std::nullopt);
     this->PushLayer<Layers::TitleLayer>();
 
     SetTargetFPS(45);
     while (!WindowShouldClose())
     {
+        this->OnEvent();
+        this->Update();
         this->RenderLayers();
     }
 }
 
+/*
+ * Queue layer transition.
+ */
+std::function<void(std::unique_ptr<Layers::Layer>)> Application::TransitionLayerLambda(std::list<std::unique_ptr<Layers::Layer>>::iterator iter)
+{
+    return [queue = m_queuedtransition, currentIter = iter](std::unique_ptr<Layers::Layer> newlayer) mutable
+    {
+        queue->emplace(Layers::TransitionLayer {.pendinglayer = std::move(newlayer), .it = currentIter});
+    };
+}
+
+/*
+ * Calls layers event handlers.
+ */
+void Application::OnEvent()
+{
+    for (const auto& layer: m_layerstack)
+    {
+        layer->OnEvent();
+    }
+}
+
+/*
+ * Process layer transition and reset optional.
+ */
+void Application::Update()
+{
+    if (m_queuedtransition && m_queuedtransition->has_value())
+    {
+        auto& [newlayer, currentIter] = m_queuedtransition->value();
+
+        // swap current layer with new one, by updating current layers position in list.
+        *currentIter = std::move(newlayer);
+        m_queuedtransition->reset();
+
+        // set new layers callback.
+        (*currentIter)->SetTransitionCallback(this->TransitionLayerLambda(currentIter));
+    }
+}
+
+/*
+ * Calls layers draw calls.
+ */
 void Application::RenderLayers()
 {
     for (const auto& layer: m_layerstack)

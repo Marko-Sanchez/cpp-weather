@@ -1,4 +1,6 @@
-#include "TitleLayer.h"
+#include "titlelayer.h"
+
+#include "aboutmelayer.h"
 
 namespace Layers
 {
@@ -16,6 +18,15 @@ TitleLayer::~TitleLayer()
 {
     UnloadTexture(m_backgroundImage);
 }
+
+void TitleLayer::OnEvent()
+{
+    if (IsKeyPressed(KEY_ONE))
+    {
+        TransitionTo<Layers::AboutMeLayer>();
+    }
+}
+
 
 void TitleLayer::OnRender()
 {
