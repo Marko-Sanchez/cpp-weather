@@ -8,7 +8,7 @@ TitleLayer::TitleLayer():
 m_screenWidth(512),
 m_screenHeight(1024)
 {
-    m_backgroundImage = LoadTexture("resources/images/squiggle2.png");
+    m_backgroundImage = LoadTexture("resources/images/squiggle.png");
 
     int textureWidth{MeasureText("cppweather", 42)};
     m_textSize = Vector2((static_cast<float>(m_screenWidth) - textureWidth) / 2, static_cast<float>(m_screenHeight) / 2);
