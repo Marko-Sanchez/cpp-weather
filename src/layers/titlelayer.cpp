@@ -6,17 +6,22 @@ namespace Layers
 {
 TitleLayer::TitleLayer():
 m_screenWidth(512),
-m_screenHeight(1024)
+m_screenHeight(1024),
+m_title("Cpp-Weather")
 {
-    m_backgroundImage = LoadTexture("resources/images/squiggle.png");
+    m_backgroundTexture = LoadTexture("resources/images/title.png");
+    m_isTextureLoaded = (m_backgroundTexture.id > 0);
 
-    int textureWidth{MeasureText("cppweather", 42)};
-    m_textSize = Vector2((static_cast<float>(m_screenWidth) - textureWidth) / 2, static_cast<float>(m_screenHeight) / 2);
+    int textureWidth{MeasureText(m_title.c_str(), 42)};
+    m_titleSize = Vector2((static_cast<float>(m_screenWidth) - textureWidth) / 2, 60);
 }
 
 TitleLayer::~TitleLayer()
 {
-    UnloadTexture(m_backgroundImage);
+    if (m_isTextureLoaded)
+    {
+        UnloadTexture(m_backgroundTexture);
+    }
 }
 
 void TitleLayer::OnEvent()
@@ -32,8 +37,9 @@ void TitleLayer::OnRender()
 {
     BeginDrawing();
         ClearBackground(RAYWHITE);
-        DrawTexture(m_backgroundImage, m_screenWidth / 2 - m_backgroundImage.width / 2, 0, WHITE);
-        DrawText("cppweather", m_textSize.x, m_textSize.y, 42, BLACK);
+        DrawTexture(m_backgroundTexture, -128, 0, WHITE);
+        DrawText(m_title.c_str(), m_titleSize.x + 2, m_titleSize.y + 2, 48, BLACK);
+        DrawText(m_title.c_str(), m_titleSize.x, m_titleSize.y, 48, WHITE);
     EndDrawing();
 }
 }

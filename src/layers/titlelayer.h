@@ -13,9 +13,11 @@ private:
     const int m_screenWidth;
     const int m_screenHeight;
 
-    Vector2 m_textSize;
+    const std::string m_title;
+    Vector2 m_titleSize;
 
-    Texture2D m_backgroundImage;
+    Texture2D m_backgroundTexture;
+    bool m_isTextureLoaded;
 
 public:
     TitleLayer();
