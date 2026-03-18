@@ -49,10 +49,14 @@ void Application::Run()
     this->PushLayer<Layers::TitleLayer>();
 
     SetTargetFPS(45);
+
+    float deltaTime{};
     while (!WindowShouldClose())
     {
+        deltaTime = GetFrameTime();
+
         this->OnEvent();
-        this->Update();
+        this->OnUpdate(deltaTime);
         this->RenderLayers();
     }
 }
@@ -82,7 +86,7 @@ void Application::OnEvent()
 /*
  * Process layer transition and reset optional.
  */
-void Application::Update()
+void Application::OnUpdate(float delta)
 {
     if (m_queuedtransition && m_queuedtransition->has_value())
     {
@@ -94,6 +98,11 @@ void Application::Update()
 
         // set new layers callback.
         (*currentIter)->SetTransitionCallback(this->TransitionLayerLambda(currentIter));
+    }
+
+    for (const auto& layer: m_layerstack)
+    {
+        layer->OnUpdate(delta);
     }
 }
 

@@ -31,7 +31,7 @@ public:
     void Run();
 
     void OnEvent();
-    void Update();
+    void OnUpdate(float delta);
     void RenderLayers();
 
     template<typename TLayer, typename ...Args>

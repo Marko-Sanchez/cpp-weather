@@ -1,6 +1,6 @@
 #include "titlelayer.h"
 
-#include "aboutmelayer.h"
+#include "aboutlayer.h"
 
 namespace Layers
 {
@@ -28,7 +28,7 @@ void TitleLayer::OnEvent()
 {
     if (IsKeyPressed(KEY_ONE))
     {
-        TransitionTo<Layers::AboutMeLayer>();
+        TransitionTo<Layers::AboutLayer>();
     }
 }
 
