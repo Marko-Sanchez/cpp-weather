@@ -18,6 +18,7 @@ public:
     virtual ~Layer() = default;
 
     virtual void OnEvent() {}
+    virtual void OnUpdate(float delta) {}
     virtual void OnRender() {}
 
     void SetTransitionCallback(std::function<void(std::unique_ptr<Layer>)> cb);
