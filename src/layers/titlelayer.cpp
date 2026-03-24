@@ -1,26 +1,29 @@
 #include "titlelayer.h"
 
 #include "aboutlayer.h"
+#include "raylib.h"
 
 namespace Layers
 {
 TitleLayer::TitleLayer():
 m_screenWidth(512),
 m_screenHeight(1024),
-m_title("Cpp-Weather")
+m_framecounter(0)
 {
+    m_font = LoadFont("resources/fonts/UbuntuMonoNerdFontMono-Regular.ttf");
     m_backgroundTexture = LoadTexture("resources/images/title.png");
-    m_isTextureLoaded = (m_backgroundTexture.id > 0);
-
-    int textureWidth{MeasureText(m_title.c_str(), 42)};
-    m_titleSize = Vector2((static_cast<float>(m_screenWidth) - textureWidth) / 2, 60);
 }
 
 TitleLayer::~TitleLayer()
 {
-    if (m_isTextureLoaded)
+    if (m_backgroundTexture.id > 0)
     {
         UnloadTexture(m_backgroundTexture);
+    }
+
+    if (m_font.texture.id > 0)
+    {
+        UnloadFont(m_font);
     }
 }
 
@@ -32,14 +35,46 @@ void TitleLayer::OnEvent()
     }
 }
 
+void TitleLayer::OnUpdate(float deltatime)
+{
+    ++m_framecounter;
+    if (m_framecounter == 270/* six seconds: fps * 6*/)
+    {
+        TransitionTo<Layers::AboutLayer>();
+    }
+}
 
 void TitleLayer::OnRender()
 {
     BeginDrawing();
         ClearBackground(RAYWHITE);
         DrawTexture(m_backgroundTexture, -128, 0, WHITE);
-        DrawText(m_title.c_str(), m_titleSize.x + 2, m_titleSize.y + 2, 48, BLACK);
-        DrawText(m_title.c_str(), m_titleSize.x, m_titleSize.y, 48, WHITE);
+        this->DrawTitle();
+        this->DrawImageCredits();
     EndDrawing();
+}
+
+inline void TitleLayer::DrawTitle() const
+{
+    const char* title = "Cpp-Weather";
+
+    const int fontsize{42};
+    const Vector2 textsize{MeasureTextEx(m_font, title, fontsize, 2)};
+
+    DrawTextEx(m_font, title, Vector2{((m_screenWidth - textsize.x )/ 2) + 2, 60 + 2}, fontsize, 2, BLACK);
+    DrawTextEx(m_font, title, Vector2{(m_screenWidth - textsize.x )/ 2, 60}, fontsize, 2, WHITE);
+}
+
+/*
+ * Image background credits @pumbey on discord.
+ */
+inline void TitleLayer::DrawImageCredits() const
+{
+    const char* credits = "image credits: @pumbey";
+
+    const int fontsize{13};
+    const Vector2 textsize{MeasureTextEx(m_font, credits, fontsize, 2)};
+
+    DrawTextEx(m_font, credits, Vector2{m_screenWidth - textsize.x, m_screenHeight - textsize.y}, fontsize, 2, GRAY);
 }
 }

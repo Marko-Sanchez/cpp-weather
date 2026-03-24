@@ -13,17 +13,20 @@ private:
     const int m_screenWidth;
     const int m_screenHeight;
 
-    const std::string m_title;
-    Vector2 m_titleSize;
+    int m_framecounter;
 
+    Font m_font;
     Texture2D m_backgroundTexture;
-    bool m_isTextureLoaded;
+
+    void DrawTitle() const;
+    void DrawImageCredits() const;
 
 public:
     TitleLayer();
     ~TitleLayer();
 
     virtual void OnEvent() override;
+    virtual void OnUpdate(float deltatime) override;
     virtual void OnRender() override;
 };
 }
