@@ -188,7 +188,10 @@ m_colorRandom(RED)
 
 AboutLayer::~AboutLayer()
 {
-    UnloadFont(m_font);
+    if (m_font.texture.id > 0)
+    {
+        UnloadFont(m_font);
+    }
 }
 
 void AboutLayer::OnEvent()
