@@ -1,12 +1,23 @@
 #include "titlelayer.h"
 
 #include <raylib.h>
+#include <string_view>
 
 #include "aboutlayer.h"
 #include "forecastlayer.h"
 
 namespace Layers
 {
+namespace
+{
+    constexpr int k_fontSizeTitle{42};
+    constexpr int k_fontSizeCredit{13};
+    constexpr int k_fontSpacing{2};
+
+    constexpr std::string_view k_title{"Cpp-Weather"};
+    constexpr std::string_view k_credit{"image credits: @pumbey"};
+}// anonymous namespace
+
 TitleLayer::TitleLayer():
 m_screenWidth(512),
 m_screenHeight(1024),
@@ -57,18 +68,20 @@ void TitleLayer::OnRender()
         DrawTexture(m_backgroundTexture, -128, 0, WHITE);
         this->DrawTitle();
         this->DrawImageCredits();
+
     EndDrawing();
 }
 
 inline void TitleLayer::DrawTitle() const
 {
-    const char* title = "Cpp-Weather";
+    const int yForeground{60};
+    const int yBackground{62};
+    const Vector2 textsize{MeasureTextEx(m_font, k_title.data(), k_fontSizeTitle, k_fontSpacing)};
 
-    const int fontsize{42};
-    const Vector2 textsize{MeasureTextEx(m_font, title, fontsize, 2)};
+    const float centerX{(m_screenWidth - textsize.x) / 2.0f};
 
-    DrawTextEx(m_font, title, Vector2{((m_screenWidth - textsize.x )/ 2) + 2, 60 + 2}, fontsize, 2, BLACK);
-    DrawTextEx(m_font, title, Vector2{(m_screenWidth - textsize.x )/ 2, 60}, fontsize, 2, WHITE);
+    DrawTextEx(m_font, k_title.data(), Vector2{centerX + 2, yBackground}, k_fontSizeTitle, k_fontSpacing, BLACK);
+    DrawTextEx(m_font, k_title.data(), Vector2{centerX, yForeground}, k_fontSizeTitle, k_fontSpacing, WHITE);
 }
 
 /*
@@ -76,11 +89,7 @@ inline void TitleLayer::DrawTitle() const
  */
 inline void TitleLayer::DrawImageCredits() const
 {
-    const char* credits = "image credits: @pumbey";
-
-    const int fontsize{13};
-    const Vector2 textsize{MeasureTextEx(m_font, credits, fontsize, 2)};
-
-    DrawTextEx(m_font, credits, Vector2{m_screenWidth - textsize.x, m_screenHeight - textsize.y}, fontsize, 2, GRAY);
+    const Vector2 textsize{MeasureTextEx(m_font, k_credit.data(), k_fontSizeCredit, k_fontSpacing)};
+    DrawTextEx(m_font, k_credit.data(), Vector2{m_screenWidth - textsize.x, m_screenHeight - textsize.y}, k_fontSizeCredit, k_fontSpacing, GRAY);
 }
-}
+}// namespace Layers

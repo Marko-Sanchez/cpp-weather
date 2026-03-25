@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <raylib.h>
 #include <raymath.h>
+#include <string_view>
 
 #include "titlelayer.h"
 
@@ -11,14 +12,22 @@ namespace Layers
 namespace
 {
 // how many pixels we want to scroll per frame tick.
-const float SCROLL_SPEED{60.0f};
+constexpr float k_scrollSpeed{60.0f};
 // multiplied by frametime, allows us to move between points smoothly. Higher number = instant, lower number = sluggish.
-const float SCROLL_SMOOTH{12.0f};
+constexpr float k_scrollSmooth{12.0f};
 // GetMouseWheel() returns a small number hence we multiply by WHEEL_MULTIPLIER to scroll through more pixels.
 // since if we where not using a multiplier we would only move between [-1.0, 1.0] pixels instead of 60.
-const float WHEEL_MULTIPLIER{60.0f};
+constexpr float k_wheelMultiplier{60.0f};
 
-float MaxScroll(float contentHeight, float screenHeight)
+constexpr int k_fontSizeTitle{48};
+constexpr int k_fontSizeSubTitle{32};
+constexpr int k_fontSizeBody{16};
+constexpr int k_fontSpacing{2};
+
+constexpr std::string_view k_title{"About"};
+constexpr std::string_view k_subTitle{"Cpp-Weather"};
+
+float MaxScroll(float contentHeight, float screenHeight) noexcept
 {
     return std::max(0.0f, contentHeight - screenHeight);
 }
@@ -205,18 +214,18 @@ void AboutLayer::OnEvent()
     float wheel{GetMouseWheelMove()};
     if (wheel != 0.0f)
     {
-        m_targetScroll -= wheel * WHEEL_MULTIPLIER;
+        m_targetScroll -= wheel * k_wheelMultiplier;
     }
 
     // How long the last frame took multiplied by our desired pixel speed.
     if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S))
     {
-        m_targetScroll += SCROLL_SPEED * GetFrameTime();
+        m_targetScroll += k_scrollSpeed * GetFrameTime();
     }
 
     if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W))
     {
-        m_targetScroll -= SCROLL_SPEED * GetFrameTime();
+        m_targetScroll -= k_scrollSpeed * GetFrameTime();
     }
 
     m_targetScroll = Clamp(m_targetScroll, 0.0f, MaxScroll(m_contentHeight, m_screenHeight));
@@ -225,7 +234,7 @@ void AboutLayer::OnEvent()
 void AboutLayer::OnUpdate(float deltatime)
 {
     // lerp allows smooth transition between two points: offset and target.
-    m_scrollOffset = lerp(m_scrollOffset, m_targetScroll, SCROLL_SMOOTH * deltatime);
+    m_scrollOffset = lerp(m_scrollOffset, m_targetScroll, k_scrollSmooth * deltatime);
 
     if (++m_framecounter % 45 == 0)
     {
@@ -258,39 +267,34 @@ void AboutLayer::DrawBackground() const
 
 void AboutLayer::DrawTitle() const
 {
-    const int fontSize{48};
     const int yStarterPos{60};
+    const int textWidth{MeasureText(k_title.data(), k_fontSizeTitle)};
 
-    const char* text = "About";
-    const int textWidth{MeasureText(text, fontSize)};
-
-    const int x{(m_screenWidth - textWidth) / 2};
-    const int y{static_cast<int>(yStarterPos - m_scrollOffset)};
+    const int xText{(m_screenWidth - textWidth) / 2};
+    const int yText{static_cast<int>(yStarterPos - m_scrollOffset)};
+    const int xTextShadow{xText + 2};
+    const int yTextShadow{yText + 2};
 
     // Only draw if we are above the screenheight (bottom of screen) or below the -fontsize (past the top to include text).
-    if (y > -fontSize && y < m_screenHeight)
+    if (yText > -k_fontSizeTitle && yText < m_screenHeight)
     {
-        // text with shadow
-        DrawText(text, x + 2, y + 2, fontSize, Color{0, 0, 0, 100});
-        DrawText(text, x, y, fontSize, WHITE);
+        DrawText(k_title.data(), xTextShadow, yTextShadow, k_fontSizeTitle, Color{0, 0, 0, 100});
+        DrawText(k_title.data(), xText, yText, k_fontSizeTitle, WHITE);
     }
 }
 
 void AboutLayer::DrawSubTitle() const
 {
-    const int fontSize{32};
     const int yStarterPos{128};
-
-    const char* body = "Cpp-Weather";
-    const Vector2 textsize{MeasureTextEx(m_font, body, fontSize, 2)};
+    const Vector2 textsize{MeasureTextEx(m_font, k_subTitle.data(), k_fontSizeSubTitle, k_fontSpacing)};
 
     const float x{(m_screenWidth - textsize.x) / 2};
     const float y{yStarterPos - m_scrollOffset};
 
     // Only draw if we are above the screenheight (bottom of screen) or below the -fontsize (past the top to include text).
-    if (y > -fontSize && y < m_screenHeight)
+    if (y > -k_fontSizeSubTitle && y < m_screenHeight)
     {
-        DrawTextEx(m_font, body, Vector2{x, y}, fontSize, 2, m_colorRandom);
+        DrawTextEx(m_font, k_subTitle.data(), Vector2{x, y}, k_fontSizeSubTitle, k_fontSpacing, m_colorRandom);
 
         // Add padding between text and rectangle line.
         float linepadding{8};
@@ -308,8 +312,6 @@ void AboutLayer::DrawBody() const
     A quack doctor just fucking zapped my weiner and testicle violently with maximum blast\n\
     Dog One to Dog Two. Transmition over. Transmition Over.";
 
-    const int fontSize{16};
-
     const float x_origin{m_screenWidth / 4.0f};
     const float y_origin{(m_screenHeight / 4.0f) - m_scrollOffset};
 
@@ -321,7 +323,7 @@ void AboutLayer::DrawBody() const
         Rectangle rect{x_origin, y_origin, rectWidth, rectHeight};
         DrawRectangleRec(rect, Fade(MAROON, 0.3f));
 
-        DrawTextInBounds(rect, body, m_font, fontSize, 2, 0, 0);
+        DrawTextInBounds(rect, body, m_font, k_fontSizeBody, k_fontSpacing, 0, 0);
     }
 }
 }// namespace Layers

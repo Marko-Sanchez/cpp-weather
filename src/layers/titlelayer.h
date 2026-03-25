@@ -29,5 +29,5 @@ public:
     virtual void OnUpdate(float deltatime) override;
     virtual void OnRender() override;
 };
-}
+}// namespace Layers
 #endif
