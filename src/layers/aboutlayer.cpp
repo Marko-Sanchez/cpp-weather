@@ -188,7 +188,7 @@ m_colorRandom(RED)
 
 AboutLayer::~AboutLayer()
 {
-    if (m_font.texture.id > 0)
+    if (m_font.texture.id > 0 && m_font.texture.id != GetFontDefault().texture.id)
     {
         UnloadFont(m_font);
     }

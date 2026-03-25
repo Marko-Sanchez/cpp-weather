@@ -5,6 +5,8 @@ add_library(cppweather-layers
     titlelayer.h
     aboutlayer.h
     aboutlayer.cpp
+    forecastlayer.h
+    forecastlayer.cpp
 )
 
 target_include_directories(cppweather-layers

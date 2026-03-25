@@ -1,7 +1,9 @@
 #include "titlelayer.h"
 
+#include <raylib.h>
+
 #include "aboutlayer.h"
-#include "raylib.h"
+#include "forecastlayer.h"
 
 namespace Layers
 {
@@ -21,7 +23,7 @@ TitleLayer::~TitleLayer()
         UnloadTexture(m_backgroundTexture);
     }
 
-    if (m_font.texture.id > 0)
+    if (m_font.texture.id > 0 && m_font.texture.id != GetFontDefault().texture.id)
     {
         UnloadFont(m_font);
     }
@@ -30,6 +32,10 @@ TitleLayer::~TitleLayer()
 void TitleLayer::OnEvent()
 {
     if (IsKeyPressed(KEY_ONE))
+    {
+        TransitionTo<Layers::ForecastLayer>();
+    }
+    else if (IsKeyPressed(KEY_TWO))
     {
         TransitionTo<Layers::AboutLayer>();
     }
@@ -40,7 +46,7 @@ void TitleLayer::OnUpdate(float deltatime)
     ++m_framecounter;
     if (m_framecounter == 270/* six seconds: fps * 6*/)
     {
-        TransitionTo<Layers::AboutLayer>();
+        TransitionTo<Layers::ForecastLayer>();
     }
 }
 
