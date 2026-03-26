@@ -6,6 +6,24 @@
 
 namespace Layers
 {
+namespace
+{
+    constexpr int k_FontSizeTitle{42};
+    constexpr int k_FontSizeTemp{32};
+    constexpr int k_FontSizeHighLow{16};
+    constexpr int k_FontSpacing{2};
+
+    constexpr float k_Margin{1.0f / 8.0f};
+    constexpr float k_TitleY{1.0f / 8.0f};
+    constexpr float k_HourlyY{1.0f / 4.0f};
+    constexpr float k_HourlyHeight{1.0f / 8.0f};
+    constexpr float k_WeeklyY{1.0f / 2.0f};
+    constexpr float k_WeeklyHeight{1.0f / 4.0f};
+
+    constexpr float k_PanelRoundness{0.2f};
+    constexpr int k_PanelSegments{0}; // 0 let raylib decide.
+}
+
 ForecastLayer::ForecastLayer():
 m_screenWidth(512),
 m_screenHeight(1024)
@@ -31,14 +49,17 @@ void ForecastLayer::OnEvent()
 
 void ForecastLayer::OnUpdate(float deltatime)
 {
-    // weather params ?
+    // TODO: weather params.
 }
 
 void ForecastLayer::OnRender()
 {
     BeginDrawing();
+        ClearBackground(RAYWHITE);
         this->DrawBackground();
         this->DrawTitle();
+        this->DrawHourlyForecast();
+        this->DrawWeeklyForecast();
     EndDrawing();
 }
 
@@ -49,27 +70,36 @@ inline void ForecastLayer::DrawBackground() const
 
 inline void ForecastLayer::DrawTitle() const
 {
+    // temporary.
     const char* title = "Redmond";
-    const int fontsize{42};
-    const int spacing{2};
-
-    const Vector2 titlesize{MeasureTextEx(m_font, title, fontsize, spacing)};
-    const Vector2 titlepos{(m_screenWidth - titlesize.x) / 2.0f, m_screenHeight / 8.0f};
-
-    DrawTextEx(m_font, title, titlepos, fontsize, spacing, BLACK);
-
     const char* currenttemp = "53°";
     const char* highlow = "H: 56° L: 43°";
-    const int fontct{32};
-    const int fonthl{16};
 
-    const Vector2 tempsize{MeasureTextEx(m_font, currenttemp, fontct, spacing)};
-    const Vector2 hlsize{MeasureTextEx(m_font, highlow, fonthl, spacing)};
+    // Location.
+    const Vector2 titlesize{MeasureTextEx(m_font, title, k_FontSizeTitle, k_FontSpacing)};
+    const Vector2 titlepos{CenterX(titlesize.x), m_screenHeight * k_TitleY};
 
-    const Vector2 temppos{(m_screenWidth - tempsize.x) / 2.0f, titlepos.y + titlesize.y};
-    const Vector2 hlpos{(m_screenWidth - hlsize.x) / 2.0f, temppos.y + tempsize.y};
+    // Current temperature.
+    const Vector2 tempsize{MeasureTextEx(m_font, currenttemp, k_FontSizeTemp, k_FontSpacing)};
+    const Vector2 hlsize{MeasureTextEx(m_font, highlow, k_FontSizeHighLow, k_FontSpacing)};
 
-    DrawTextEx(m_font, currenttemp, temppos, fontct, spacing, WHITE);
-    DrawTextEx(m_font, highlow, hlpos, fonthl, spacing, WHITE);
+    const Vector2 temppos{CenterX(tempsize.x), titlepos.y + titlesize.y};
+    const Vector2 hlpos{CenterX(hlsize.x), temppos.y + tempsize.y};
+
+    DrawTextEx(m_font, title, titlepos, k_FontSizeTitle, k_FontSpacing, BLACK);
+    DrawTextEx(m_font, currenttemp, temppos, k_FontSizeTemp, k_FontSpacing, WHITE);
+    DrawTextEx(m_font, highlow, hlpos, k_FontSizeHighLow, k_FontSpacing, WHITE);
+}
+
+void ForecastLayer::DrawHourlyForecast() const
+{
+    const Rectangle rect{m_screenWidth * k_Margin, m_screenHeight * k_HourlyY, (m_screenWidth * 6.0f) * k_Margin, m_screenHeight * k_HourlyHeight};
+    DrawRectangleRounded(rect, k_PanelRoundness, k_PanelSegments, Fade(SKYBLUE, 0.3f));
+}
+
+void ForecastLayer::DrawWeeklyForecast() const
+{
+    const Rectangle rect{m_screenWidth * k_Margin, m_screenHeight * k_WeeklyY, (m_screenWidth * 6.0f) * k_Margin, m_screenHeight * k_WeeklyHeight};
+    DrawRectangleRounded(rect, k_PanelRoundness, k_PanelSegments, Fade(SKYBLUE, 0.6f));
 }
 }// namespace Layers

@@ -22,6 +22,7 @@ private:
     void DrawHourlyForecast() const;
     void DrawWeeklyForecast() const;
 
+    float CenterX(float elementwidth) const noexcept;
 public:
 
     ForecastLayer();
@@ -31,5 +32,10 @@ public:
     virtual void OnUpdate(float deltatime) override;
     virtual void OnRender() override;
 };
+
+inline float ForecastLayer::CenterX(float elementwidth) const noexcept
+{
+    return (m_screenWidth - elementwidth) / 2.0f;
+}
 }// namespace Layers
 #endif
