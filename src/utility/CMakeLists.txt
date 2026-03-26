@@ -4,6 +4,7 @@ add_library(cppweather-utility
     commandlineparser.cpp
     commandlineparser.h
     logfile.h
+    weatherdata.h
 )
 
 target_include_directories(cppweather-utility
