@@ -1,9 +1,10 @@
 #ifndef FORECASTLAYER_H
 #define FORECASTLAYER_H
 
-#include "layer.h"
-
 #include <raylib.h>
+
+#include "layer.h"
+#include "utility/weatherdata.h"
 
 namespace Layers
 {
@@ -16,6 +17,8 @@ private:
 
     Font m_font;
 
+    utility::WeatherData m_weatherData;
+
     // Draw Helpers.
     void DrawBackground() const;
     void DrawTitle() const;
@@ -27,6 +30,8 @@ public:
 
     ForecastLayer();
     ~ForecastLayer();
+
+    void OnWeatherUpdate(const utility::WeatherData& data);
 
     virtual void OnEvent() override;
     virtual void OnUpdate(float deltatime) override;

@@ -3,6 +3,7 @@
 #include <raylib.h>
 
 #include "layers/aboutlayer.h"
+#include "utility/weatherdata.h"
 
 namespace Layers
 {
@@ -26,7 +27,8 @@ namespace
 
 ForecastLayer::ForecastLayer():
 m_screenWidth(512),
-m_screenHeight(1024)
+m_screenHeight(1024),
+m_weatherData(utility::MakeDefaultWeatherData())
 {
     m_font = LoadFont("resources/fonts/UbuntuMonoNerdFontMono-Regular.ttf");
 }
@@ -39,18 +41,23 @@ ForecastLayer::~ForecastLayer()
     }
 }
 
+void ForecastLayer::OnWeatherUpdate(const utility::WeatherData& data)
+{
+    m_weatherData = data;
+}
+
 void ForecastLayer::OnEvent()
 {
     if (IsKeyPressed(KEY_ONE))
     {
         TransitionTo<Layers::AboutLayer>();
     }
+
+    // TODO: handle scrolling through hourly / daily forecast.
 }
 
 void ForecastLayer::OnUpdate(float deltatime)
-{
-    // TODO: weather params.
-}
+{}
 
 void ForecastLayer::OnRender()
 {
@@ -63,32 +70,29 @@ void ForecastLayer::OnRender()
     EndDrawing();
 }
 
-inline void ForecastLayer::DrawBackground() const
+void ForecastLayer::DrawBackground() const
 {
-    DrawRectangleGradientV(0, 0, m_screenWidth, m_screenHeight, WHITE, BLUE);
+    DrawRectangleGradientV(0, 0, m_screenWidth, m_screenHeight, BLUE, SKYBLUE);
 }
 
-inline void ForecastLayer::DrawTitle() const
+void ForecastLayer::DrawTitle() const
 {
-    // temporary.
-    const char* title = "Redmond";
-    const char* currenttemp = "53°";
-    const char* highlow = "H: 56° L: 43°";
+    const std::string highlow{std::format("H: {} L: {}", m_weatherData.high, m_weatherData.low)};
 
     // Location.
-    const Vector2 titlesize{MeasureTextEx(m_font, title, k_FontSizeTitle, k_FontSpacing)};
+    const Vector2 titlesize{MeasureTextEx(m_font, m_weatherData.location.c_str(), k_FontSizeTitle, k_FontSpacing)};
     const Vector2 titlepos{CenterX(titlesize.x), m_screenHeight * k_TitleY};
 
     // Current temperature.
-    const Vector2 tempsize{MeasureTextEx(m_font, currenttemp, k_FontSizeTemp, k_FontSpacing)};
-    const Vector2 hlsize{MeasureTextEx(m_font, highlow, k_FontSizeHighLow, k_FontSpacing)};
+    const Vector2 tempsize{MeasureTextEx(m_font, m_weatherData.currentTemperature.c_str(), k_FontSizeTemp, k_FontSpacing)};
+    const Vector2 hlsize{MeasureTextEx(m_font, highlow.c_str(), k_FontSizeHighLow, k_FontSpacing)};
 
     const Vector2 temppos{CenterX(tempsize.x), titlepos.y + titlesize.y};
     const Vector2 hlpos{CenterX(hlsize.x), temppos.y + tempsize.y};
 
-    DrawTextEx(m_font, title, titlepos, k_FontSizeTitle, k_FontSpacing, BLACK);
-    DrawTextEx(m_font, currenttemp, temppos, k_FontSizeTemp, k_FontSpacing, WHITE);
-    DrawTextEx(m_font, highlow, hlpos, k_FontSizeHighLow, k_FontSpacing, WHITE);
+    DrawTextEx(m_font, m_weatherData.location.c_str(), titlepos, k_FontSizeTitle, k_FontSpacing, BLACK);
+    DrawTextEx(m_font, m_weatherData.currentTemperature.c_str(), temppos, k_FontSizeTemp, k_FontSpacing, WHITE);
+    DrawTextEx(m_font, highlow.c_str(), hlpos, k_FontSizeHighLow, k_FontSpacing, WHITE);
 }
 
 void ForecastLayer::DrawHourlyForecast() const
