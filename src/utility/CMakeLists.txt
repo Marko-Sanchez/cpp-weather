@@ -5,6 +5,7 @@ add_library(cppweather-utility
     commandlineparser.h
     logfile.h
     weatherdata.h
+    threadsafeslot.h
 )
 
 target_include_directories(cppweather-utility
