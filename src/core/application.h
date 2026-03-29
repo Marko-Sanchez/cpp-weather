@@ -7,23 +7,32 @@
 
 #include "core/network.h"
 #include "layers/layer.h"
+#include "utility/threadsafeslot.h"
 
 namespace Core
 {
 class Application
 {
 private:
+
+    using uLayer = std::unique_ptr<Layers::Layer>;
+
     const std::string m_windowname;
     const std::string m_applicationversion;
 
+    std::shared_ptr<utility::ThreadSafeSlot> m_weatherSlot;
     Core::Network m_network;
 
     std::shared_ptr<std::optional<Layers::TransitionLayer>> m_queuedtransition;
-    std::list<std::unique_ptr<Layers::Layer>> m_layerstack;
+    std::list<uLayer> m_layerstack;
 
-    std::function<void(std::unique_ptr<Layers::Layer>)> TransitionLayerLambda(std::list<std::unique_ptr<Layers::Layer>>::iterator iter);
+    std::function<void(uLayer)> TransitionLayerLambda(std::list<uLayer>::iterator iter);
+
+    void ProcessTransition();
+    void ProcessWeatherUpdate();
 
 public:
+
     Application(const std::string windowname, const std::string version, std::optional<std::pair<std::string, std::string>> stringlocation = {});
     ~Application();
 
