@@ -41,8 +41,8 @@ struct DailyForecast
 struct WeatherData
 {
     // location.
-    std::string region;
-    std::string location;
+    std::string state;
+    std::string city;
 
     // current condition.
     std::string currentTemperature;
@@ -69,8 +69,8 @@ inline WeatherData MakeDefaultWeatherData()
 {
     WeatherData data =
     {
-        .region   = "Washington, USA",
-        .location = "Redmond",
+        .state   = "Washington, USA",
+        .city    = "Redmond",
 
         .currentTemperature = "53",
         .high               = "56",

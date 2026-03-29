@@ -80,7 +80,7 @@ void ForecastLayer::DrawTitle() const
     const std::string highlow{std::format("H: {} L: {}", m_weatherData.high, m_weatherData.low)};
 
     // Location.
-    const Vector2 titlesize{MeasureTextEx(m_font, m_weatherData.location.c_str(), k_FontSizeTitle, k_FontSpacing)};
+    const Vector2 titlesize{MeasureTextEx(m_font, m_weatherData.city.c_str(), k_FontSizeTitle, k_FontSpacing)};
     const Vector2 titlepos{CenterX(titlesize.x), m_screenHeight * k_TitleY};
 
     // Current temperature.
@@ -90,7 +90,7 @@ void ForecastLayer::DrawTitle() const
     const Vector2 temppos{CenterX(tempsize.x), titlepos.y + titlesize.y};
     const Vector2 hlpos{CenterX(hlsize.x), temppos.y + tempsize.y};
 
-    DrawTextEx(m_font, m_weatherData.location.c_str(), titlepos, k_FontSizeTitle, k_FontSpacing, BLACK);
+    DrawTextEx(m_font, m_weatherData.city.c_str(), titlepos, k_FontSizeTitle, k_FontSpacing, BLACK);
     DrawTextEx(m_font, m_weatherData.currentTemperature.c_str(), temppos, k_FontSizeTemp, k_FontSpacing, WHITE);
     DrawTextEx(m_font, highlow.c_str(), hlpos, k_FontSizeHighLow, k_FontSpacing, WHITE);
 }
