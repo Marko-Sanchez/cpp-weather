@@ -5,6 +5,7 @@
 #include <httplib.h>
 
 #include "networks/geonetwork.h"
+#include "utility/weatherdata.h"
 
 namespace network
 {
@@ -21,7 +22,7 @@ private:
 public:
     WeatherNetwork(std::optional<Location> coordinates = {});
 
-    std::expected<std::string, std::string> GetWeather();
+    std::expected<utility::WeatherData, std::string> GetWeather();
     httplib::Client& GetClient();
 };
 }// network

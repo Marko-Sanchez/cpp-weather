@@ -3,7 +3,7 @@
 
 namespace utility
 {
-std::expected<std::string, std::string> WeatherParseContents(const std::string& contents)
+std::expected<WeatherData, std::string> WeatherParseContents(const std::string& contents)
 {
     try
     {
@@ -13,24 +13,72 @@ std::expected<std::string, std::string> WeatherParseContents(const std::string& 
             return std::unexpected(json["reason"].get<std::string>());
         }
 
-        double temperature = json.at("current").at("temperature_2m").get<double>();
-        std::string tempUnits = json.at("current_units").at("temperature_2m").get<std::string>();
+        WeatherData data;
 
-        const auto time = json.at("daily").at("time");
-        const auto temp = json.at("daily").at("temperature_2m_mean");
+        const auto current = json.at("current");
+        const auto hourly  = json.at("hourly");
+        const auto daily   = json.at("daily");
 
-        std::string comb{std::format("temperature: {} {}\n\n", temperature, tempUnits)};
+        const auto currentTemp = current.at("temperature_2m").get<float>();
+        const auto tempUnits = json.at("current_units").at("temperature_2m").get<std::string>();
 
-        // 0th-index is current day, skip.
-        for (size_t i{1}; i < time.size(); ++i)
+        const auto time     = daily.at("time");
+        const auto meantemp = daily.at("temperature_2m_mean");
+        const auto mintemp  = daily.at("temperature_2m_min");
+        const auto maxtemp  = daily.at("temperature_2m_max");
+        const auto weathercode = daily.at("weather_code");
+
+        const auto hourlyTime        = hourly.at("time");
+        const auto hourlyTemperature = hourly.at("temperature_2m");
+
+        data.currentTemperature = std::format("{}{}", currentTemp, tempUnits);
+
+        // note: relies on url parameter forecast_days >= 8.
+        for (size_t i{1}; i <= data.weeklyForecast.size(); ++i)
         {
-            comb += std::format("temperature from {} at {}{}\n", time[i].get<std::string>(), temp[i].get<int>(), tempUnits);
+            data.weeklyForecast[i - 1] =
+            {
+                .day  = time[i].get<std::string>(),
+                .mean = std::format("{}{}", meantemp[i].get<float>(), tempUnits),
+                .high = std::format("{}{}", maxtemp[i].get<float>(), tempUnits),
+                .low = std::format("{}{}", mintemp[i].get<float>(), tempUnits),
+                .condition = TranslateWeatherCode(weathercode[i].get<int>())
+            };
         }
 
-        return comb;
+        // "2026-03-27T19:15"
+        auto normalizedTime = current.at("time").get<std::string>();
+        if (auto colon = normalizedTime.rfind(":"); colon != std::string::npos)
+        {
+            normalizedTime.replace(colon + 1, 2, "00");
+        }
+
+        size_t i{0};
+        while(i < hourlyTime.size())
+        {
+            if (!normalizedTime.compare(hourlyTime[i].get<std::string>()))
+            {
+                break;
+            }
+            ++i;
+        }
+
+        size_t hourslater{i + data.hourlyForecast.size()};
+        for (size_t k{0}; i < hourslater; ++i, ++k)
+        {
+            data.hourlyForecast[k] =
+            {
+                .hour        = hourlyTime[i].get<std::string>(),
+                .temperature = std::format("{}{}", hourlyTemperature[i].get<float>(), tempUnits),
+                .condition   = WeatherCondition::Unknown
+            };
+        }
+
+        return data;
     }
     catch(const nlohmann::json::exception& e)
     {
+        // TODO: figure out how to handle error.
         return std::unexpected(std::format("JSON parse failed: {}", e.what()));
     }
 }

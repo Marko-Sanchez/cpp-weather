@@ -6,11 +6,12 @@
 #include <httplib.h>
 
 #include "networks/networklogging.h"
+#include "utility/weatherdata.h"
 
 namespace Core
 {
-Network::Network(std::optional<std::pair<std::string, std::string>> citystate):
-m_weatherResults(nullptr)
+Network::Network(std::shared_ptr<utility::ThreadSafeSlot> queue, std::optional<std::pair<std::string, std::string>> citystate):
+m_queue(queue)
 {
     // if citystate is defined call geonetwork, else continue and call weathernetwork.
     if (citystate)
@@ -44,17 +45,6 @@ m_weatherResults(nullptr)
     });
 }
 
-/*
-* Return a shared pointer containing const weather results. Constness helps avoid
-* data race condition; readers will have a reference to pointer. While writer atomically
-* updates the pointer itself. Once weatherResults is updated readers will still have old shared
-* pointer, eventually being destroyed.
-*/
-std::shared_ptr<const WeatherResults> Network::GetLatestWeather() const
-{
-    return m_weatherResults.load();
-}
-
 void Network::ThreadLoop(std::stop_token stoptoken)
 {
     auto untilNextUpdate{std::chrono::steady_clock::now()};
@@ -65,12 +55,7 @@ void Network::ThreadLoop(std::stop_token stoptoken)
         // Process request.
         if (const auto wr = m_weathernetwork->GetWeather(); wr)
         {
-            auto snapshot = std::make_shared<WeatherResults>(WeatherResults{
-                .weather = wr.value(),
-                .timestamp = std::chrono::steady_clock::now()
-                });
-
-            m_weatherResults.store(snapshot);
+            m_queue->Set(wr.value());
         }
 
         // wait until next scheduled time or if thread is called to stop.

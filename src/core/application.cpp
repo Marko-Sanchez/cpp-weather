@@ -32,11 +32,14 @@ Application::~Application()
  */
 void Application::GetWebContents()
 {
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-    if (auto ptr{m_network.GetLatestWeather()}; ptr)
+    auto results = m_weatherSlot->TryConsume();
+    while (results == std::nullopt)
     {
-        std::println("{}", ptr->weather);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        results = m_weatherSlot->TryConsume();
     }
+
+    std::println("Current temperature {}", results.value().currentTemperature);
 }
 
 void Application::Run()

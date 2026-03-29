@@ -20,8 +20,16 @@ m_weatherclient(WEB_ADDRESS)
     }
 
     m_weatherparams.emplace("current", "temperature_2m");
+    m_weatherparams.emplace("current", "weather_code");
+
+    m_weatherparams.emplace("hourly", "temperature_2m");
+
     m_weatherparams.emplace("daily", "temperature_2m_mean");
-    m_weatherparams.emplace("forecast_days", "9");
+    m_weatherparams.emplace("daily", "temperature_2m_min");
+    m_weatherparams.emplace("daily", "temperature_2m_max");
+    m_weatherparams.emplace("daily", "weather_code");
+    m_weatherparams.emplace("forecast_days", "8");
+
     m_weatherparams.emplace("temperature_unit", "fahrenheit");
     m_weatherparams.emplace("timezone", "America/Los_Angeles");
 
@@ -29,7 +37,7 @@ m_weatherclient(WEB_ADDRESS)
     m_headers.emplace("Accept", "application/json");
 }
 
-std::expected<std::string, std::string> WeatherNetwork::GetWeather()
+std::expected<utility::WeatherData, std::string> WeatherNetwork::GetWeather()
 {
     auto result = m_weatherclient.Get(API_ENDPOINT, m_weatherparams, m_headers);
     if (result && result->status == httplib::StatusCode::OK_200)
