@@ -31,10 +31,11 @@ struct DailyForecast
 {
     std::string day; // "Mon", "Tue"
 
+    std::string mean;
     std::string high;
     std::string low;
 
-    WeatherCondition condtion;
+    WeatherCondition condition;
 };
 
 struct WeatherData
@@ -57,6 +58,11 @@ struct WeatherData
     std::string lastUpdated; // date:time of last update.
     bool isStale{true};
 };
+
+inline WeatherCondition TranslateWeatherCode(int code)
+{
+    return WeatherCondition::Unknown;
+}
 
 // Place holder or used when first starting forecast layer.
 inline WeatherData MakeDefaultWeatherData()
@@ -88,9 +94,10 @@ inline WeatherData MakeDefaultWeatherData()
         data.weeklyForecast[i] =
         {
             .day      = "---",
+            .mean     = "--",
             .high     = "--",
             .low      = "--",
-            .condtion = WeatherCondition::Unknown
+            .condition = WeatherCondition::Unknown
         };
     }
 
