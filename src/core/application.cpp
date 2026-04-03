@@ -94,19 +94,20 @@ void Application::ProcessTransition()
     (*currentIter)->SetTransitionCallback(this->TransitionLayerLambda(currentIter));
 }
 
+/*
+ * Search for forecast layer if it exist, consume weather data.
+*/
 void Application::ProcessWeatherUpdate()
 {
-    auto data = m_weatherSlot->TryConsume();
-    if (!data)
-    {
-        return;
-    }
-
     for (const auto& layer: m_layerstack)
     {
         if (auto weatherlayer = dynamic_cast<Layers::ForecastLayer*>(layer.get()))
         {
-            weatherlayer->OnWeatherUpdate(data.value());
+            // note: transitioning back to layer will consume data.
+            if (auto data = m_weatherSlot->TryConsume())
+            {
+                weatherlayer->OnWeatherUpdate(data.value());
+            }
         }
     }
 }
