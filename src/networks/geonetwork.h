@@ -6,32 +6,31 @@
 
 #include <httplib.h>
 
+#include "utility/weatherdata.h"
+
 namespace network
 {
-struct Location
-{
-    std::string latitude;
-    std::string longitude;
-};
-
 class GeoNetwork
 {
 private:
+
     const std::string WEB_ADDRESS{"http://geocoding-api.open-meteo.com"};
     const std::string API_ENDPOINT{"/v1/search"};
 
     const std::string m_state;
+    const std::string m_city;
 
     httplib::Client m_geoclient;
     httplib::Params m_geoparams;
     httplib::Headers m_headers;
 
-    std::expected<Location, std::string> GetGeographicCoordinates();
+    std::expected<utility::Location, std::string> GetGeographicCoordinates();
 
 public:
+
     GeoNetwork(const std::string& city, const std::string& state);
 
-    std::expected<Location, std::string> GetCoordinates();
+    std::expected<utility::Location, std::string> GetCoordinates();
     httplib::Client& GetClient();
 };
 }// namespace network

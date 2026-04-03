@@ -2,9 +2,10 @@
 #define WEATHERNETWORK_H
 
 #include <string>
+#include <expected>
+
 #include <httplib.h>
 
-#include "networks/geonetwork.h"
 #include "utility/weatherdata.h"
 
 namespace network
@@ -12,6 +13,7 @@ namespace network
 class WeatherNetwork
 {
 private:
+
     const std::string WEB_ADDRESS{"http://api.open-meteo.com"};
     const std::string API_ENDPOINT{"/v1/forecast"};
 
@@ -19,8 +21,11 @@ private:
     httplib::Params m_weatherparams;
     httplib::Headers m_headers;
 
+    utility::Location m_location;
+
 public:
-    WeatherNetwork(std::optional<Location> coordinates = {});
+
+    WeatherNetwork(std::optional<utility::Location> coordinates = {});
 
     std::expected<utility::WeatherData, std::string> GetWeather();
     httplib::Client& GetClient();

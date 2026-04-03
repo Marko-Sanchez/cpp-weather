@@ -1,22 +1,27 @@
 #include "weathernetwork.h"
 
 #include "cppweather/cppweather.h"
+#include "utility/weatherdata.h"
 #include "utility/weatherparser.h"
 
 namespace network
 {
-WeatherNetwork::WeatherNetwork(std::optional<Location> coordinates):
+WeatherNetwork::WeatherNetwork(std::optional<utility::Location> coordinates):
 m_weatherclient(WEB_ADDRESS)
 {
     if (coordinates)
     {
+        m_location = coordinates.value();
+
         m_weatherparams.emplace("latitude", coordinates->latitude);
         m_weatherparams.emplace("longitude", coordinates->longitude);
     }
     else // default to microsoft headquaters: redmond, wa.
     {
-        m_weatherparams.emplace("latitude", "47.6446751");
-        m_weatherparams.emplace("longitude", "-122.133615");
+        m_location = utility::GetDefaultLocation();
+
+        m_weatherparams.emplace("latitude", m_location.latitude);
+        m_weatherparams.emplace("longitude", m_location.longitude);
     }
 
     m_weatherparams.emplace("current", "temperature_2m");
@@ -28,7 +33,7 @@ m_weatherclient(WEB_ADDRESS)
     m_weatherparams.emplace("daily", "temperature_2m_min");
     m_weatherparams.emplace("daily", "temperature_2m_max");
     m_weatherparams.emplace("daily", "weather_code");
-    m_weatherparams.emplace("forecast_days", "8");
+    m_weatherparams.emplace("forecast_days", "8"); // note: weatherparser expects this to be 8.
 
     m_weatherparams.emplace("temperature_unit", "fahrenheit");
     m_weatherparams.emplace("timezone", "America/Los_Angeles");
@@ -48,7 +53,7 @@ std::expected<utility::WeatherData, std::string> WeatherNetwork::GetWeather()
             return std::unexpected(std::format("Unexpected Content-type returned: {}", type));
         }
 
-        return utility::WeatherParseContents(result->body);
+        return utility::WeatherParseContents(result->body, m_location);
     }
 
     return std::unexpected(std::format("HTTP error: {}", httplib::to_string(result.error())));

@@ -19,6 +19,15 @@ enum class WeatherCondition
     Unknown
 };
 
+struct Location
+{
+    std::string latitude;
+    std::string longitude;
+
+    std::string state;
+    std::string city;
+};
+
 struct HourlyForecast
 {
     std::string hour;      // "11am", "11pm"
@@ -41,8 +50,7 @@ struct DailyForecast
 struct WeatherData
 {
     // location.
-    std::string state;
-    std::string city;
+    Location location;
 
     // current condition.
     std::string currentTemperature;
@@ -64,17 +72,27 @@ inline WeatherCondition TranslateWeatherCode(int code)
     return WeatherCondition::Unknown;
 }
 
+inline Location GetDefaultLocation()
+{
+    return Location
+    {
+        .latitude  = "47.6446751",
+        .longitude = "-122.133615",
+        .state     = "Washington, USA",
+        .city      = "Redmond"
+    };
+}
+
 // Place holder or used when first starting forecast layer.
 inline WeatherData MakeDefaultWeatherData()
 {
     WeatherData data =
     {
-        .state   = "Washington, USA",
-        .city    = "Redmond",
+        .location = GetDefaultLocation(),
 
-        .currentTemperature = "53",
-        .high               = "56",
-        .low                = "50",
+        .currentTemperature = "---",
+        .high               = "---",
+        .low                = "---",
         .condition          = WeatherCondition::Cloudy,
         .isStale            = true
     };
@@ -84,7 +102,7 @@ inline WeatherData MakeDefaultWeatherData()
         data.hourlyForecast[i] =
         {
             .hour        = std::to_string(i) + ":00",
-            .temperature = "53",
+            .temperature = "---",
             .condition   = WeatherCondition::Unknown
         };
     }
@@ -94,9 +112,9 @@ inline WeatherData MakeDefaultWeatherData()
         data.weeklyForecast[i] =
         {
             .day      = "---",
-            .mean     = "--",
-            .high     = "--",
-            .low      = "--",
+            .mean     = "---",
+            .high     = "---",
+            .low      = "---",
             .condition = WeatherCondition::Unknown
         };
     }

@@ -1,9 +1,12 @@
 #include "weatherparser.h"
+
 #include <string>
+
+#include "utility/weatherdata.h"
 
 namespace utility
 {
-std::expected<WeatherData, std::string> WeatherParseContents(const std::string& contents)
+std::expected<WeatherData, std::string> WeatherParseContents(const std::string& contents, const utility::Location& location)
 {
     try
     {
@@ -15,12 +18,17 @@ std::expected<WeatherData, std::string> WeatherParseContents(const std::string& 
 
         WeatherData data;
 
+        data.location = location;
+
         const auto current = json.at("current");
         const auto hourly  = json.at("hourly");
         const auto daily   = json.at("daily");
 
         const auto currentTemp = current.at("temperature_2m").get<float>();
-        const auto tempUnits = json.at("current_units").at("temperature_2m").get<std::string>();
+        const auto currentWC   = current.at("weather_code").get<int>();
+        // note: ubuntu font has trouble displaying tempUnits symbol.
+        // const auto tempUnits   = json.at("current_units").at("temperature_2m").get<std::string>();
+        const auto tempUnits   = "*F";
 
         const auto time     = daily.at("time");
         const auto meantemp = daily.at("temperature_2m_mean");
@@ -32,6 +40,9 @@ std::expected<WeatherData, std::string> WeatherParseContents(const std::string& 
         const auto hourlyTemperature = hourly.at("temperature_2m");
 
         data.currentTemperature = std::format("{}{}", currentTemp, tempUnits);
+        data.high               = std::format("{}{}", maxtemp[0].get<float>(), tempUnits);
+        data.low                = std::format("{}{}", mintemp[0].get<float>(), tempUnits);
+        data.condition          = TranslateWeatherCode(currentWC);
 
         // note: relies on url parameter forecast_days >= 8.
         for (size_t i{1}; i <= data.weeklyForecast.size(); ++i)
@@ -74,6 +85,8 @@ std::expected<WeatherData, std::string> WeatherParseContents(const std::string& 
             };
         }
 
+        data.lastUpdated = current.at("time").get<std::string>();
+
         return data;
     }
     catch(const nlohmann::json::exception& e)
@@ -83,7 +96,7 @@ std::expected<WeatherData, std::string> WeatherParseContents(const std::string& 
     }
 }
 
-std::expected<PSS, std::string> GeoParseContents(const std::string& state, const std::string& contents)
+std::expected<utility::Location, std::string> GeoParseContents(const std::string& state, const std::string& city, const std::string& contents)
 {
     try
     {
@@ -100,12 +113,20 @@ std::expected<PSS, std::string> GeoParseContents(const std::string& state, const
 
         for (const auto& result: json["results"])
         {
-            if (result.contains("admin1") && result["admin1"].get<std::string>() == state)
+            if (result.contains("admin1")
+                    && result["admin1"].get<std::string>() == state
+                    && result["name"].get<std::string>() == city)
             {
                 auto latD = result.at("latitude").get<double>();
                 auto lonD = result.at("longitude").get<double>();
 
-                return std::make_pair(std::format("{:.6f}", latD), std::format("{:.6f}", lonD));
+                return utility::Location
+                {
+                    .latitude  = std::format("{:.6f}", latD),
+                    .longitude = std::format("{:.6f}", lonD),
+                    .state     = state,
+                    .city      = city
+                };
             }
         }
     }
