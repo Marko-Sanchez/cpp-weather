@@ -28,6 +28,7 @@ m_weatherclient(WEB_ADDRESS)
     m_weatherparams.emplace("current", "weather_code");
 
     m_weatherparams.emplace("hourly", "temperature_2m");
+    m_weatherparams.emplace("hourly", "weather_code");
 
     m_weatherparams.emplace("daily", "temperature_2m_mean");
     m_weatherparams.emplace("daily", "temperature_2m_min");

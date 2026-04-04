@@ -38,6 +38,7 @@ std::expected<WeatherData, std::string> WeatherParseContents(const std::string& 
 
         const auto hourlyTime        = hourly.at("time");
         const auto hourlyTemperature = hourly.at("temperature_2m");
+        const auto hourlyWC          = hourly.at("weather_code");
 
         data.currentTemperature = std::format("{}{}", currentTemp, tempUnits);
         data.high               = std::format("{}{}", maxtemp[0].get<float>(), tempUnits);
@@ -45,6 +46,7 @@ std::expected<WeatherData, std::string> WeatherParseContents(const std::string& 
         data.condition          = TranslateWeatherCode(currentWC);
 
         // note: relies on url parameter forecast_days >= 8.
+        // start at 1, skip today.
         for (size_t i{1}; i <= data.weeklyForecast.size(); ++i)
         {
             data.weeklyForecast[i - 1] =
@@ -64,6 +66,7 @@ std::expected<WeatherData, std::string> WeatherParseContents(const std::string& 
             normalizedTime.replace(colon + 1, 2, "00");
         }
 
+        // find current hour to start hourly forecast from.
         size_t i{0};
         while(i < hourlyTime.size())
         {
@@ -73,7 +76,12 @@ std::expected<WeatherData, std::string> WeatherParseContents(const std::string& 
             }
             ++i;
         }
+        if (i == hourlyTime.size())
+        {
+            return std::unexpected("Could not find current time in hourly forecast.");
+        }
 
+        // get the next 24 hours of forecast.
         size_t hourslater{i + data.hourlyForecast.size()};
         for (size_t k{0}; i < hourslater; ++i, ++k)
         {
@@ -81,7 +89,7 @@ std::expected<WeatherData, std::string> WeatherParseContents(const std::string& 
             {
                 .hour        = hourlyTime[i].get<std::string>(),
                 .temperature = std::format("{}{}", hourlyTemperature[i].get<float>(), tempUnits),
-                .condition   = WeatherCondition::Unknown
+                .condition   = TranslateWeatherCode(hourlyWC[i].get<int>())
             };
         }
 

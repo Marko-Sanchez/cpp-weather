@@ -12,10 +12,12 @@ enum class WeatherCondition
     Clear,
     PartlyCloudy,
     Cloudy,
-    Rainy,
-    Stormy,
-    Snowy,
     Foggy,
+    Drizzle,
+    Rainy,
+    Snowy,
+    RainShowers,
+    ThunderStorm,
     Unknown
 };
 
@@ -67,9 +69,42 @@ struct WeatherData
     bool isStale{true};
 };
 
+/*
+ * @note:
+ *
+ * https://www.nodc.noaa.gov/archive/arc0021/0002199/1.1/data/0-data/HTML/WMO-CODE/WMO4677.HTM
+ */
 inline WeatherCondition TranslateWeatherCode(int code)
 {
+    if (code == 0)                return WeatherCondition::Clear;
+    if (code <= 2)                return WeatherCondition::PartlyCloudy;
+    if (code == 3)                return WeatherCondition::Cloudy;
+    if (code >= 40 && code <= 49) return WeatherCondition::Foggy;
+    if (code >= 50 && code <= 59) return WeatherCondition::Drizzle;
+    if (code >= 60 && code <= 69) return WeatherCondition::Rainy;
+    if (code >= 70 && code <= 75) return WeatherCondition::Snowy;
+    if (code >= 80 && code <= 84) return WeatherCondition::RainShowers;
+    if (code >= 95 && code <= 99) return WeatherCondition::ThunderStorm;
+
     return WeatherCondition::Unknown;
+}
+
+inline std::string_view WeatherConditionToString(WeatherCondition condition)
+{
+    switch(condition)
+    {
+        case WeatherCondition::Clear:        return "Clear";
+        case WeatherCondition::PartlyCloudy: return "Partly Cloudy";
+        case WeatherCondition::Cloudy:       return "Cloudy";
+        case WeatherCondition::Foggy:        return "Foggy";
+        case WeatherCondition::Drizzle:      return "Drizzle";
+        case WeatherCondition::Rainy:        return "Rainy";
+        case WeatherCondition::Snowy:        return "Snowy";
+        case WeatherCondition::RainShowers:  return "Rain Showers";
+        case WeatherCondition::ThunderStorm: return "Thunderstorm";
+
+        default:                             return "Unknown";
+    }
 }
 
 inline Location GetDefaultLocation()
