@@ -7,7 +7,6 @@
 
 #include "core/network.h"
 #include "layers/layer.h"
-#include "utility/threadsafeslot.h"
 
 namespace Core
 {
@@ -20,7 +19,6 @@ private:
     const std::string m_windowname;
     const std::string m_applicationversion;
 
-    std::shared_ptr<utility::ThreadSafeSlot> m_weatherSlot;
     Core::Network m_network;
 
     std::shared_ptr<std::optional<Layers::TransitionLayer>> m_queuedtransition;

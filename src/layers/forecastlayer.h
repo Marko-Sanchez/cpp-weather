@@ -17,7 +17,8 @@ private:
 
     Font m_font;
 
-    utility::WeatherData m_weatherData;
+    // reference to static variable.
+    utility::WeatherData& m_weatherData;
 
     // Draw Helpers.
     void DrawBackground() const;
@@ -30,8 +31,6 @@ public:
 
     ForecastLayer();
     ~ForecastLayer();
-
-    void OnWeatherUpdate(const utility::WeatherData& data);
 
     virtual void OnEvent() override;
     virtual void OnUpdate(float deltatime) override;

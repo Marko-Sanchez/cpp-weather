@@ -6,7 +6,7 @@
 
 #include <raylib.h>
 
-#include "layers/forecastlayer.h"
+#include "utility/appstate.h"
 #include "layers/titlelayer.h"
 
 namespace Core
@@ -14,8 +14,7 @@ namespace Core
 Application::Application(const std::string windowname, const std::string version, std::optional<std::pair<std::string, std::string>> stringlocation):
 m_windowname(windowname),
 m_applicationversion(version),
-m_weatherSlot(std::make_shared<utility::ThreadSafeSlot>()),
-m_network(m_weatherSlot, stringlocation)
+m_network(stringlocation)
 {}
 
 Application::~Application()
@@ -32,14 +31,15 @@ Application::~Application()
  */
 void Application::GetWebContents()
 {
-    auto results = m_weatherSlot->TryConsume();
+    auto results = utility::AppSate::Get().weatherslot.TryConsume();
     while (results == std::nullopt)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        results = m_weatherSlot->TryConsume();
+        results = utility::AppSate::Get().weatherslot.TryConsume();
     }
 
-    std::println("Current temperature {}", results.value().currentTemperature);
+    auto& weatherdata = results.value();
+    std::println("Current temperature for {}: {}",weatherdata.location.city, weatherdata.currentTemperature);
 }
 
 void Application::Run()
@@ -99,17 +99,14 @@ void Application::ProcessTransition()
 */
 void Application::ProcessWeatherUpdate()
 {
-    for (const auto& layer: m_layerstack)
+    auto data = utility::AppSate::Get().weatherslot.TryConsume();
+    if (!data)
     {
-        if (auto weatherlayer = dynamic_cast<Layers::ForecastLayer*>(layer.get()))
-        {
-            // note: transitioning back to layer will consume data.
-            if (auto data = m_weatherSlot->TryConsume())
-            {
-                weatherlayer->OnWeatherUpdate(data.value());
-            }
-        }
+        return;
     }
+
+    utility::AppSate::Get().currentweather         = std::move(*data);
+    utility::AppSate::Get().currentweather.isStale = false;
 }
 
 /*

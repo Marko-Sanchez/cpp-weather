@@ -6,12 +6,11 @@
 #include <httplib.h>
 
 #include "networks/networklogging.h"
-#include "utility/weatherdata.h"
+#include "utility/appstate.h"
 
 namespace Core
 {
-Network::Network(std::shared_ptr<utility::ThreadSafeSlot> queue, std::optional<std::pair<std::string, std::string>> citystate):
-m_queue(queue)
+Network::Network(std::optional<std::pair<std::string, std::string>> citystate)
 {
     // if citystate is defined call geonetwork, else continue and call weathernetwork.
     if (citystate)
@@ -55,7 +54,7 @@ void Network::ThreadLoop(std::stop_token stoptoken)
         // Process request.
         if (const auto wr = m_weathernetwork->GetWeather(); wr)
         {
-            m_queue->Set(wr.value());
+            utility::AppSate::Get().weatherslot.Set(wr.value());
         }
 
         // wait until next scheduled time or if thread is called to stop.

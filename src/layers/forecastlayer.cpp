@@ -4,6 +4,7 @@
 
 #include "layers/aboutlayer.h"
 #include "utility/weatherdata.h"
+#include "utility/appstate.h"
 
 namespace Layers
 {
@@ -28,7 +29,7 @@ namespace
 ForecastLayer::ForecastLayer():
 m_screenWidth(512),
 m_screenHeight(1024),
-m_weatherData(utility::MakeDefaultWeatherData())
+m_weatherData(utility::AppSate::Get().currentweather)
 {
     m_font = LoadFont("resources/fonts/UbuntuMonoNerdFontMono-Regular.ttf");
 }
@@ -39,11 +40,6 @@ ForecastLayer::~ForecastLayer()
     {
         UnloadFont(m_font);
     }
-}
-
-void ForecastLayer::OnWeatherUpdate(const utility::WeatherData& data)
-{
-    m_weatherData = data;
 }
 
 void ForecastLayer::OnEvent()
@@ -57,7 +53,9 @@ void ForecastLayer::OnEvent()
 }
 
 void ForecastLayer::OnUpdate(float deltatime)
-{}
+{
+    m_weatherData = utility::AppSate::Get().currentweather;
+}
 
 void ForecastLayer::OnRender()
 {
