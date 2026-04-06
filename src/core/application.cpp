@@ -40,6 +40,25 @@ void Application::GetWebContents()
 
     auto& weatherdata = results.value();
     std::println("Current temperature for {}: {}",weatherdata.location.city, weatherdata.currentTemperature);
+
+    std::string hf;
+    hf.reserve(512);
+
+    std::println("Hourly Temperatures:");
+    for (const auto& hour: weatherdata.hourlyForecast)
+    {
+        hf.append(std::format("{} : {}\t", hour.hour, hour.temperature));
+    }
+    std::println("{}", hf);
+    hf.clear();
+
+
+    std::println("Day Temperatures:");
+    for (const auto& day: weatherdata.weeklyForecast)
+    {
+        hf.append(std::format("{} : {}\t", day.day, day.mean));
+    }
+    std::println("{}", hf);
 }
 
 void Application::Run()

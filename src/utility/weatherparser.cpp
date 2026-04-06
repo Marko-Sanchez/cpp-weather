@@ -1,11 +1,85 @@
 #include "weatherparser.h"
 
+#include <chrono>
+#include <print>
 #include <string>
 
 #include "utility/weatherdata.h"
 
 namespace utility
 {
+
+/*
+ * Parses time provided by API. User may want to change time zone from what was used by the API.
+ *
+ * @note:
+ *
+ * If time given by API is no longer in local time, change 'timepoint' time to use sys_time.
+ *
+ * @params:
+ *
+ * time: "2026-03-27T19:15" in API time zone, json.at("timeszone").
+ * timezone: desired time zone.
+ */
+std::expected<WeatherTime, std::string> TimeZoneParse(const std::string& time, const std::string& timezone = "America/Los_Angeles")
+{
+    try
+    {
+        std::istringstream ss{time};
+
+        // time provided by API uses 'local_time'
+        const std::chrono::time_zone* zone{std::chrono::locate_zone(timezone)};
+        std::chrono::local_time<std::chrono::minutes> timepoint;
+
+
+        // 2026-03-27T19:15
+        if (time.find('T') != std::string::npos)
+        {
+            if (!(ss >> std::chrono::parse("%FT%R", timepoint)))
+            {
+                return std::unexpected("Error parsing timepoint.");
+            }
+        }
+        // 2026-03-27
+        else
+        {
+            std::chrono::local_time<std::chrono::days> datepoint;
+            if ( !(ss >> std::chrono::parse("%F",datepoint)) )
+            {
+                return std::unexpected("Error parsing datepoint.");
+            }
+
+            timepoint = std::chrono::local_time<std::chrono::minutes>{datepoint};
+        }
+
+        std::chrono::zoned_time zonedtime = std::chrono::zoned_time{zone, timepoint};
+        auto localtime = zonedtime.get_local_time();
+
+        // Get total nuber of days since unix epoch, then translate to 'mon'- 'fri'.
+        std::chrono::local_time<std::chrono::days> days = std::chrono::floor<std::chrono::days>(localtime);
+        std::chrono::year_month_weekday yearlybreakdown = std::chrono::year_month_weekday(days);
+
+        // time elapsed since midnight.
+        auto durationsincemidnight = localtime - days;
+        std::chrono::hh_mm_ss hourlybreakdown{durationsincemidnight};
+
+        return WeatherTime
+        {
+            .ymw = yearlybreakdown,
+            .hms = hourlybreakdown,
+
+            .day  = std::format("{}", yearlybreakdown.weekday()),
+            .hour = std::format("{}{}",
+                                    std::chrono::make12(hourlybreakdown.hours()).count(),
+                                    std::chrono::is_am(hourlybreakdown.hours()) ?"am":"pm")
+        };
+    }
+    catch (const std::exception& e)
+    {
+        return std::unexpected(std::format("Time parsing error: {}", e.what()));
+    }
+}
+
 std::expected<WeatherData, std::string> WeatherParseContents(const std::string& contents, const utility::Location& location)
 {
     try
@@ -49,9 +123,13 @@ std::expected<WeatherData, std::string> WeatherParseContents(const std::string& 
         // start at 1, skip today.
         for (size_t i{1}; i <= data.weeklyForecast.size(); ++i)
         {
+            auto utime = time[i].get<std::string>();
+            auto ptime = TimeZoneParse(utime);
+            auto day   = ptime.has_value() ? ptime->day : utime;
+
             data.weeklyForecast[i - 1] =
             {
-                .day  = time[i].get<std::string>(),
+                .day  = day,
                 .mean = std::format("{}{}", meantemp[i].get<float>(), tempUnits),
                 .high = std::format("{}{}", maxtemp[i].get<float>(), tempUnits),
                 .low = std::format("{}{}", mintemp[i].get<float>(), tempUnits),
@@ -85,9 +163,13 @@ std::expected<WeatherData, std::string> WeatherParseContents(const std::string& 
         size_t hourslater{i + data.hourlyForecast.size()};
         for (size_t k{0}; i < hourslater; ++i, ++k)
         {
+            auto utime = hourlyTime[i].get<std::string>();
+            auto ptime = TimeZoneParse(utime);
+            auto hour = ptime.has_value() ? ptime->hour : utime.substr(utime.find('T'));
+
             data.hourlyForecast[k] =
             {
-                .hour        = hourlyTime[i].get<std::string>(),
+                .hour        = hour,
                 .temperature = std::format("{}{}", hourlyTemperature[i].get<float>(), tempUnits),
                 .condition   = TranslateWeatherCode(hourlyWC[i].get<int>())
             };
