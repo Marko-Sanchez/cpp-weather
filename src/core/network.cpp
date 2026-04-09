@@ -16,7 +16,7 @@ Network::Network(std::optional<std::pair<std::string, std::string>> citystate)
     if (citystate)
     {
         m_geonetwork = std::make_unique<network::GeoNetwork>(citystate->first, citystate->second);
-        if (const auto location = m_geonetwork->GetCoordinates(); location)
+        if (const auto location = m_geonetwork->GetGeographicCoordinates(); location)
         {
             m_weathernetwork = std::make_unique<network::WeatherNetwork>(location.value());
         }

@@ -39,11 +39,6 @@ std::expected<utility::Location, GeoNetwork::Error> GeoNetwork::GetGeographicCoo
     return std::unexpected(utility::NetworkError("NetworkError", "Unable to retrieve latitude/longitude."));
 }
 
-std::expected<utility::Location, GeoNetwork::Error> GeoNetwork::GetCoordinates()
-{
-    return this->GetGeographicCoordinates();
-}
-
 httplib::Client& GeoNetwork::GetClient()
 {
     return m_geoclient;
