@@ -1,10 +1,10 @@
 #include "weatherparser.h"
 
 #include <chrono>
-#include <print>
 #include <string>
 
-#include "utility/weatherdata.h"
+#include "weatherdata.h"
+#include "errorhandling.h"
 
 namespace utility
 {
@@ -21,7 +21,7 @@ namespace utility
  * time: "2026-03-27T19:15" in API time zone, json.at("timeszone").
  * timezone: desired time zone.
  */
-std::expected<WeatherTime, std::string> TimeZoneParse(const std::string& time, const std::string& timezone = "America/Los_Angeles")
+std::expected<WeatherTime, ParsingError> TimeZoneParse(const std::string& time, const std::string& timezone = "America/Los_Angeles")
 {
     try
     {
@@ -37,7 +37,7 @@ std::expected<WeatherTime, std::string> TimeZoneParse(const std::string& time, c
         {
             if (!(ss >> std::chrono::parse("%FT%R", timepoint)))
             {
-                return std::unexpected("Error parsing timepoint.");
+                return std::unexpected(ParsingError("ParsingError", "Error parsing timepoint."));
             }
         }
         // 2026-03-27
@@ -46,7 +46,7 @@ std::expected<WeatherTime, std::string> TimeZoneParse(const std::string& time, c
             std::chrono::local_time<std::chrono::days> datepoint;
             if ( !(ss >> std::chrono::parse("%F",datepoint)) )
             {
-                return std::unexpected("Error parsing datepoint.");
+                return std::unexpected(ParsingError("ParsingError","Error parsing datepoint."));
             }
 
             timepoint = std::chrono::local_time<std::chrono::minutes>{datepoint};
@@ -76,18 +76,18 @@ std::expected<WeatherTime, std::string> TimeZoneParse(const std::string& time, c
     }
     catch (const std::exception& e)
     {
-        return std::unexpected(std::format("Time parsing error: {}", e.what()));
+        return std::unexpected(ParsingError("ParsingError", std::format("Time parsing error: {}", e.what())));
     }
 }
 
-std::expected<WeatherData, std::string> WeatherParseContents(const std::string& contents, const utility::Location& location)
+std::expected<WeatherData, ParsingError> WeatherParseContents(const std::string& contents, const utility::Location& location)
 {
     try
     {
         auto json = nlohmann::json::parse(contents);
         if (json.contains("error"))
         {
-            return std::unexpected(json["reason"].get<std::string>());
+            return std::unexpected(ParsingError("ParsingError", json["reason"].get<std::string>()));
         }
 
         WeatherData data;
@@ -156,7 +156,7 @@ std::expected<WeatherData, std::string> WeatherParseContents(const std::string& 
         }
         if (i == hourlyTime.size())
         {
-            return std::unexpected("Could not find current time in hourly forecast.");
+            return std::unexpected(ParsingError("ParsingError", "Could not find current time in hourly forecast."));
         }
 
         // get the next 24 hours of forecast.
@@ -182,11 +182,11 @@ std::expected<WeatherData, std::string> WeatherParseContents(const std::string& 
     catch(const nlohmann::json::exception& e)
     {
         // TODO: figure out how to handle error.
-        return std::unexpected(std::format("JSON parse failed: {}", e.what()));
+        return std::unexpected(ParsingError("ParsingError", std::format("JSON parse failed: {}", e.what())));
     }
 }
 
-std::expected<utility::Location, std::string> GeoParseContents(const std::string& state, const std::string& city, const std::string& contents)
+std::expected<Location, ParsingError> GeoParseContents(const std::string& state, const std::string& city, const std::string& contents)
 {
     try
     {
@@ -195,10 +195,10 @@ std::expected<utility::Location, std::string> GeoParseContents(const std::string
         {
             if (json.contains("reason"))
             {
-                return std::unexpected(json["reason"].get<std::string>());
+                return std::unexpected(ParsingError("ParsingError", json["reason"].get<std::string>()));
             }
 
-            return std::unexpected("Unkown error: missing 'results' field.");
+            return std::unexpected(ParsingError("ParsingError", "Unkown error: missing 'results' field."));
         }
 
         for (const auto& result: json["results"])
@@ -222,9 +222,9 @@ std::expected<utility::Location, std::string> GeoParseContents(const std::string
     }
     catch(const nlohmann::json::exception& e)
     {
-        return std::unexpected(std::format("JSON parse failed: {}", e.what()));
+        return std::unexpected(ParsingError("ParsingError", std::format("JSON parse failed: {}", e.what())));
     }
 
-    return std::unexpected{std::format("Could not find state: {}", state)};
+    return std::unexpected(ParsingError("ParsingError", std::format("Could not find state: {}", state)));
 }
 }// namespace utility

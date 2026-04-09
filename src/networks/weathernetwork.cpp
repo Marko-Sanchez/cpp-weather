@@ -43,7 +43,7 @@ m_weatherclient(WEB_ADDRESS)
     m_headers.emplace("Accept", "application/json");
 }
 
-std::expected<utility::WeatherData, std::string> WeatherNetwork::GetWeather()
+std::expected<utility::WeatherData, WeatherNetwork::Error> WeatherNetwork::GetWeather()
 {
     auto result = m_weatherclient.Get(API_ENDPOINT, m_weatherparams, m_headers);
     if (result && result->status == httplib::StatusCode::OK_200)
@@ -51,13 +51,13 @@ std::expected<utility::WeatherData, std::string> WeatherNetwork::GetWeather()
         auto type = result->get_header_value("Content-type");
         if (type.empty() || type.find("application/json") == std::string::npos)
         {
-            return std::unexpected(std::format("Unexpected Content-type returned: {}", type));
+            return std::unexpected(utility::NetworkError("NetworkError", std::format("Unexpected Content-type returned: {}", type)));
         }
 
         return utility::WeatherParseContents(result->body, m_location);
     }
 
-    return std::unexpected(std::format("HTTP error: {}", httplib::to_string(result.error())));
+    return std::unexpected(utility::NetworkError("NetworkError", std::format("HTTP error: {}", httplib::to_string(result.error()))));
 }
 
 httplib::Client& WeatherNetwork::GetClient()

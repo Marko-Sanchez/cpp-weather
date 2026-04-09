@@ -3,16 +3,20 @@
 
 #include <string>
 #include <expected>
+#include <variant>
 
 #include <httplib.h>
 
 #include "utility/weatherdata.h"
+#include "utility/errorhandling.h"
 
 namespace network
 {
 class WeatherNetwork
 {
 private:
+
+    using Error = std::variant<utility::NetworkError, utility::ParsingError>;
 
     const std::string WEB_ADDRESS{"http://api.open-meteo.com"};
     const std::string API_ENDPOINT{"/v1/forecast"};
@@ -27,7 +31,7 @@ public:
 
     WeatherNetwork(std::optional<utility::Location> coordinates = {});
 
-    std::expected<utility::WeatherData, std::string> GetWeather();
+    std::expected<utility::WeatherData, Error> GetWeather();
     httplib::Client& GetClient();
 };
 }// network

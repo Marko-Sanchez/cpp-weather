@@ -7,12 +7,15 @@
 #include <httplib.h>
 
 #include "utility/weatherdata.h"
+#include "utility/errorhandling.h"
 
 namespace network
 {
 class GeoNetwork
 {
 private:
+
+    using Error = std::variant<utility::NetworkError, utility::ParsingError>;
 
     const std::string WEB_ADDRESS{"http://geocoding-api.open-meteo.com"};
     const std::string API_ENDPOINT{"/v1/search"};
@@ -24,13 +27,13 @@ private:
     httplib::Params m_geoparams;
     httplib::Headers m_headers;
 
-    std::expected<utility::Location, std::string> GetGeographicCoordinates();
+    std::expected<utility::Location, Error> GetGeographicCoordinates();
 
 public:
 
     GeoNetwork(const std::string& city, const std::string& state);
 
-    std::expected<utility::Location, std::string> GetCoordinates();
+    std::expected<utility::Location, Error> GetCoordinates();
     httplib::Client& GetClient();
 };
 }// namespace network

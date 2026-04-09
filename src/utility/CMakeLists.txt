@@ -7,6 +7,8 @@ add_library(cppweather-utility
     weatherdata.h
     threadsafeslot.h
     appstate.h
+    iresult.h
+    errorhandling.h
 )
 
 target_include_directories(cppweather-utility
