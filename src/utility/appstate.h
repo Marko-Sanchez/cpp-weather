@@ -6,11 +6,11 @@
 
 namespace utility
 {
-struct AppSate
+struct AppState
 {
-    static AppSate& Get()
+    static AppState& Get()
     {
-        static AppSate instance;
+        static AppState instance;
         return instance;
     }
 

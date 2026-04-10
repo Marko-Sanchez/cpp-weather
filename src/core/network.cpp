@@ -4,6 +4,8 @@
 #include <memory>
 
 #include <httplib.h>
+#include <print>
+#include <variant>
 
 #include "networks/networklogging.h"
 #include "utility/appstate.h"
@@ -12,29 +14,35 @@ namespace Core
 {
 Network::Network(std::optional<std::pair<std::string, std::string>> citystate)
 {
+
+#if ENABLE_LOGGING
+    m_logging = std::make_shared<utility::LogFile>("resources/logging/log.txt");
+#endif
+
     // if citystate is defined call geonetwork, else continue and call weathernetwork.
     if (citystate)
     {
         m_geonetwork = std::make_unique<network::GeoNetwork>(citystate->first, citystate->second);
-        if (const auto location = m_geonetwork->GetGeographicCoordinates(); location)
+        network::AttachLoggers(m_geonetwork->GetClient(), m_logging, "GEO");
+
+        const auto location = m_geonetwork->GetGeographicCoordinates();
+        if (location)
         {
             m_weathernetwork = std::make_unique<network::WeatherNetwork>(location.value());
+        }
+        else
+        {
+            std::visit([](const auto& error)
+            {
+                std::println("{}: {}", error.GetType(), error.GetMessage());
+            },
+            location.error());
         }
     }
 
     if (!m_weathernetwork)
     {
         m_weathernetwork = std::make_unique<network::WeatherNetwork>();
-    }
-
-#if ENABLE_LOGGING
-    m_logging = std::make_shared<utility::LogFile>("resources/logging/log.txt");
-#endif
-
-    // note: the above geo call is made before logging is performed.
-    if (m_geonetwork)
-    {
-        network::AttachLoggers(m_geonetwork->GetClient(), m_logging, "GEO");
     }
     network::AttachLoggers(m_weathernetwork->GetClient(), m_logging, "WEATHER");
 
@@ -52,9 +60,18 @@ void Network::ThreadLoop(std::stop_token stoptoken)
         untilNextUpdate += UPDATE_INTERVAL;
 
         // Process request.
-        if (const auto wr = m_weathernetwork->GetWeather(); wr)
+        const auto wr = m_weathernetwork->GetWeather();
+        if (wr)
         {
-            utility::AppSate::Get().weatherslot.Set(wr.value());
+            utility::AppState::Get().weatherslot.Set(wr.value());
+        }
+        else
+        {
+            std::visit([](const auto& error)
+            {
+                std::println("{}: {}", error.GetType(), error.GetMessage());
+            },
+            wr.error());
         }
 
         // wait until next scheduled time or if thread is called to stop.

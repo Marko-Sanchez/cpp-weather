@@ -29,7 +29,7 @@ namespace
 ForecastLayer::ForecastLayer():
 m_screenWidth(512),
 m_screenHeight(1024),
-m_weatherData(utility::AppSate::Get().currentweather)
+m_weatherData(utility::AppState::Get().currentweather)
 {
     m_font = LoadFont("resources/fonts/UbuntuMonoNerdFontMono-Regular.ttf");
 }
@@ -54,7 +54,7 @@ void ForecastLayer::OnEvent()
 
 void ForecastLayer::OnUpdate(float deltatime)
 {
-    m_weatherData = utility::AppSate::Get().currentweather;
+    m_weatherData = utility::AppState::Get().currentweather;
 }
 
 void ForecastLayer::OnRender()

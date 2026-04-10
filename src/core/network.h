@@ -35,7 +35,6 @@ public:
     Network(std::optional<std::pair<std::string, std::string>> citystate = {});
     ~Network() = default;
 
-    void GetGeographicCoordinates() const;
     void ForceRefresh();
 };
 }

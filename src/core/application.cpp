@@ -31,11 +31,11 @@ Application::~Application()
  */
 void Application::GetWebContents()
 {
-    auto results = utility::AppSate::Get().weatherslot.TryConsume();
+    auto results = utility::AppState::Get().weatherslot.TryConsume();
     while (results == std::nullopt)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        results = utility::AppSate::Get().weatherslot.TryConsume();
+        results = utility::AppState::Get().weatherslot.TryConsume();
     }
 
     auto& weatherdata = results.value();
@@ -118,14 +118,14 @@ void Application::ProcessTransition()
 */
 void Application::ProcessWeatherUpdate()
 {
-    auto data = utility::AppSate::Get().weatherslot.TryConsume();
+    auto data = utility::AppState::Get().weatherslot.TryConsume();
     if (!data)
     {
         return;
     }
 
-    utility::AppSate::Get().currentweather         = std::move(*data);
-    utility::AppSate::Get().currentweather.isStale = false;
+    utility::AppState::Get().currentweather         = std::move(*data);
+    utility::AppState::Get().currentweather.isStale = false;
 }
 
 /*
