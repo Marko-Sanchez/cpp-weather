@@ -25,6 +25,7 @@ private:
 
     std::mutex                  m_cvMutex;
     std::condition_variable_any m_cv;
+    bool                        m_forceRefresh{false};
 
     std::jthread m_thread;
 

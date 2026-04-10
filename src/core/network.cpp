@@ -76,12 +76,19 @@ void Network::ThreadLoop(std::stop_token stoptoken)
 
         // wait until next scheduled time or if thread is called to stop.
         std::unique_lock lck(m_cvMutex);
-        m_cv.wait_until(lck, stoptoken, untilNextUpdate, [] {return false;});
+        m_cv.wait_until(lck, stoptoken, untilNextUpdate, [&refresh = m_forceRefresh] {return refresh;});
+        m_forceRefresh = false;
     }
 }
 
+/*
+ * notify_all wakes up the thread, the thread then checks the predicate lambda holding 'm_forceRefresh'
+ * if true exits wait and pulls weather data.
+ */
 void Network::ForceRefresh()
 {
+    std::lock_guard lck(m_cvMutex);
+    m_forceRefresh = true;
     m_cv.notify_all();
 }
 }// namespace Core
