@@ -17,7 +17,7 @@ namespace network
 #if ENABLE_LOGGING
     inline void AttachLoggers(httplib::Client& client, std::shared_ptr<utility::LogFile> lf, const std::string& prefix)
     {
-        if (!lf)
+        if (!lf || !client.is_valid())
         {
             return;
         }
