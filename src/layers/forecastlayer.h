@@ -17,16 +17,25 @@ private:
 
     Font m_font;
 
+    Vector2 m_lastMousePos;
+
+    float   m_hourlyScrollOffset;
+    bool    m_isDraggingHourly;
+
     // reference to static variable.
     utility::WeatherData& m_weatherData;
 
     // Draw Helpers.
     void DrawBackground() const;
     void DrawTitle() const;
-    void DrawHourlyForecast() const;
-    void DrawWeeklyForecast() const;
+    void DrawHourlyForecast();
+    void DrawWeeklyForecast();
+
+    void HandleHourlyScrolling(const Rectangle& rect);
 
     float CenterX(float elementwidth) const noexcept;
+    bool CheckBounds(const Vector2& mouse, const Rectangle& bounds) const noexcept;
+
 public:
 
     ForecastLayer();
@@ -40,6 +49,14 @@ public:
 inline float ForecastLayer::CenterX(float elementwidth) const noexcept
 {
     return (m_screenWidth - elementwidth) / 2.0f;
+}
+
+inline bool ForecastLayer::CheckBounds(const Vector2& mouse, const Rectangle& rect) const noexcept
+{
+    return rect.x <= mouse.x &&
+           mouse.x <= (rect.x + rect.width) &&
+           rect.y <= mouse.y &&
+           mouse.y <= (rect.y + rect.height);
 }
 }// namespace Layers
 #endif
