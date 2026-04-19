@@ -114,9 +114,9 @@ std::expected<WeatherData, ParsingError> WeatherParseContents(const std::string&
         const auto hourlyTemperature = hourly.at("temperature_2m");
         const auto hourlyWC          = hourly.at("weather_code");
 
-        data.currentTemperature = std::format("{}{}", currentTemp, tempUnits);
-        data.high               = std::format("{}{}", maxtemp[0].get<float>(), tempUnits);
-        data.low                = std::format("{}{}", mintemp[0].get<float>(), tempUnits);
+        data.currentTemperature = std::format("{:.1f}", currentTemp);
+        data.high               = std::format("{:.0f}", maxtemp[0].get<float>());
+        data.low                = std::format("{:.0f}", mintemp[0].get<float>());
         data.condition          = TranslateWeatherCode(currentWC);
 
         // note: relies on url parameter forecast_days >= 8.
@@ -130,9 +130,9 @@ std::expected<WeatherData, ParsingError> WeatherParseContents(const std::string&
             data.weeklyForecast[i - 1] =
             {
                 .day  = day,
-                .mean = std::format("{}{}", meantemp[i].get<float>(), tempUnits),
-                .high = std::format("{}{}", maxtemp[i].get<float>(), tempUnits),
-                .low = std::format("{}{}", mintemp[i].get<float>(), tempUnits),
+                .mean = std::format("{:.0f}", meantemp[i].get<float>()),
+                .high = std::format("{:.0f}", maxtemp[i].get<float>()),
+                .low = std::format("{:.0f}", mintemp[i].get<float>()),
                 .condition = TranslateWeatherCode(weathercode[i].get<int>())
             };
         }
@@ -170,7 +170,7 @@ std::expected<WeatherData, ParsingError> WeatherParseContents(const std::string&
             data.hourlyForecast[k] =
             {
                 .hour        = hour,
-                .temperature = std::format("{}{}", hourlyTemperature[i].get<float>(), tempUnits),
+                .temperature = std::format("{:.0f}", hourlyTemperature[i].get<float>()),
                 .condition   = TranslateWeatherCode(hourlyWC[i].get<int>())
             };
         }
