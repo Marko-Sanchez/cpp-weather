@@ -17,6 +17,5 @@ target_include_directories(cppweather-layers
 
 target_link_libraries(cppweather-layers
     PUBLIC
-        cppweather-utility
-        raylib
+        cppweather-render
 )
