@@ -1,7 +1,8 @@
 #include "forecastlayer.h"
 
 #include <algorithm>
-#include <print>
+#include <string>
+
 #include <raylib.h>
 
 #include "layers/aboutlayer.h"
@@ -15,28 +16,41 @@ namespace
     constexpr int k_FontSizeTitle{42};
     constexpr int k_FontSizeTemp{32};
     constexpr int k_FontSizeHighLow{16};
-    constexpr int k_FontSizeHourly{16};
+    constexpr int k_FontSizeHourly{20};
     constexpr int k_FontSizeSmall{12};
     constexpr int k_FontSpacing{2};
 
     constexpr float k_Margin{1.0f / 8.0f};
     constexpr float k_TitleY{1.0f / 8.0f};
     constexpr float k_HourlyY{1.0f / 4.0f};
-    constexpr float k_HourlyHeight{1.0f / 8.0f};
+    constexpr float k_HourlyHeight{2.0f / 10.0f};
     constexpr float k_WeeklyY{1.0f / 2.0f};
     constexpr float k_WeeklyHeight{1.0f / 4.0f};
 
     constexpr float k_PanelRoundness{0.2f};
     constexpr int k_PanelSegments{0}; // 0 let raylib decide.
 
-    constexpr std::string k_hourlyTitle{"HOURLY FORECAST"};
+    constexpr std::string k_hourlyTitle{"Hourly forecast"};
+
+    Color GetTemperatureColor(int temp)
+    {
+        if (temp >= 85) return Color{255, 69, 0, 255};   // Hot red-orange.
+        if (temp >= 75) return Color{255, 140, 0, 255};  // Warm orange.
+        if (temp >= 65) return Color{255, 215, 0, 255};  // Mild yellow.
+        if (temp >= 55) return Color{255, 206, 235, 255};// Cool sky blue.
+
+        return BLUE;                                     // Cold blue.
+    }
 }
 
 ForecastLayer::ForecastLayer():
 m_screenWidth(512),
 m_screenHeight(1024),
+m_layerScrollOffset(0.0f),
 m_hourlyScrollOffset(0.0f),
+m_weeklyScrollOffset(0.0f),
 m_isDraggingHourly(false),
+m_isDraggingWeekly(false),
 m_weatherData(utility::AppState::Get().currentweather)
 {
     m_font = LoadFont("resources/fonts/UbuntuMonoNerdFontMono-Regular.ttf");
@@ -56,8 +70,6 @@ void ForecastLayer::OnEvent()
     {
         TransitionTo<Layers::AboutLayer>();
     }
-
-    // TODO: handle scrolling through hourly / daily forecast.
 }
 
 void ForecastLayer::OnUpdate(float deltatime)
@@ -103,51 +115,98 @@ void ForecastLayer::DrawTitle() const
 
 void ForecastLayer::DrawHourlyForecast()
 {
+    // Panel background.
     const Rectangle rect{m_screenWidth * k_Margin, m_screenHeight * k_HourlyY, (m_screenWidth * 6.0f) * k_Margin, m_screenHeight * k_HourlyHeight};
     DrawRectangleRounded(rect, k_PanelRoundness, k_PanelSegments, Fade(SKYBLUE, 0.3f));
 
-    // TODO: May be removed, string will depend on users preferred type.
-    std::string subtitle{" (fahrenheit)"};
+    const float xPadding{10.0f};
 
+    // Title.
     Vector2 titlelength{MeasureTextEx(m_font, k_hourlyTitle.c_str(), k_FontSizeHourly, k_FontSpacing)};
-    Vector2 titleV{rect.x + 10, rect.y + titlelength.y};
-
-    std::string temp, hourly;
-    for (const auto& hour: m_weatherData.hourlyForecast)
-    {
-        temp.append(std::format("{}\t", hour.temperature));
-        hourly.append(std::format("{}\t", hour.hour));
-    }
-
-    auto hlength{MeasureTextEx(m_font, hourly.c_str(), k_FontSizeHourly, k_FontSpacing)};
-    auto tlength{MeasureTextEx(m_font, temp.c_str(), k_FontSizeHourly, k_FontSpacing)};
-
-    this->HandleHourlyScrolling(rect);
-
-    auto maxLength{std::max(hlength.x, tlength.x) - rect.width};
-    m_hourlyScrollOffset = std::clamp(m_hourlyScrollOffset, 0.0f, maxLength > 0.0f ? maxLength : 0.0f);
-
-    const float hourY{rect.y + (rect.height * 0.75f)};
-    const float hourX{10 + rect.x - m_hourlyScrollOffset};
-    Vector2 hourV{hourX, hourY};
-
-
+    Vector2 titleV{rect.x + xPadding, rect.y + titlelength.y};
     DrawTextEx(m_font, k_hourlyTitle.c_str(), titleV, k_FontSizeHourly, k_FontSpacing, WHITE);
-    DrawTextEx(m_font, subtitle.c_str(), Vector2{titleV.x + titlelength.x, titleV.y}, k_FontSizeSmall, k_FontSpacing, WHITE);
 
+    const float columnWidth{65.0f};                                          // width of temp/hour/icon.
+    const auto  totalWidth {columnWidth * m_weatherData.hourlyForecast.size()};
+    const auto  maxScroll  {std::max(totalWidth - rect.width, 0.0f)};
+
+    this->HandleScrolling(rect, m_isDraggingHourly);
+    m_hourlyScrollOffset = std::clamp(m_hourlyScrollOffset, 0.0f, maxScroll);
+
+    const float yTemp     {rect.y + rect.height * 0.25f};
+    const float yCondition{rect.y + rect.height * 0.50f};
+    const float yHour     {rect.y + rect.height * 0.75f};
+
+    const float xStart {xPadding + rect.x - m_hourlyScrollOffset};
+
+    // Draw hourly forecast.
     BeginScissorMode(rect.x, rect.y, rect.width, rect.height);
-        DrawTextEx(m_font, temp.c_str(), Vector2{hourV.x, hourV.y - k_FontSizeHourly}, k_FontSizeHourly, k_FontSpacing, WHITE);
-        DrawTextEx(m_font, hourly.c_str(), hourV, k_FontSizeHourly, k_FontSpacing, WHITE);
+
+        std::string buffer;
+        for (size_t i{0}; i < m_weatherData.hourlyForecast.size(); ++i)
+        {
+            const auto& hour   = m_weatherData.hourlyForecast[i];
+            const float xCol   = xStart + (i * columnWidth);
+
+            // TODO: if data is not loaded in time default '---' is used and throws error on stoi.
+            buffer = hour.temperature;
+            DrawTextEx(m_font, buffer.c_str(), Vector2{xCol, yTemp}, k_FontSizeHourly, k_FontSpacing, GetTemperatureColor(std::stoi(hour.temperature)));
+
+            m_iconAtlas.DrawWeatherIcon(hour.condition, Vector2{xCol, yCondition}, 1.0f);
+
+            buffer = hour.hour;
+            DrawTextEx(m_font, buffer.c_str(), Vector2{xCol, yHour}, k_FontSizeHourly, k_FontSpacing, WHITE);
+        }
+
     EndScissorMode();
+
+    // Scroll progress.
+    if (maxScroll > 0.0f)
+    {
+        const float scrollPercent{m_hourlyScrollOffset / maxScroll};
+        const float indicatorWidth{(rect.width / totalWidth) * rect.width};
+        const float indicatorX{rect.x + (scrollPercent * (rect.width - indicatorWidth))};
+
+        const float yPadding{8.0f};
+        const float indicatorY{rect.y + rect.height - yPadding};
+        const float edgePadding{10.0f};
+
+        const float clampedX{std::clamp(indicatorX, rect.x + edgePadding, rect.x + rect.width - indicatorWidth - edgePadding)};
+        DrawRectangleRounded(Rectangle{clampedX, indicatorY, indicatorWidth, 2.0f}, k_PanelRoundness, k_PanelSegments, Fade(WHITE, 0.5f));
+    }
 }
 
 void ForecastLayer::DrawWeeklyForecast()
 {
+    // Panel background.
     const Rectangle rect{m_screenWidth * k_Margin, m_screenHeight * k_WeeklyY, (m_screenWidth * 6.0f) * k_Margin, m_screenHeight * k_WeeklyHeight};
     DrawRectangleRounded(rect, k_PanelRoundness, k_PanelSegments, Fade(SKYBLUE, 0.6f));
+
+    Vector2 weeklyV{rect.x + 10, rect.y - m_weeklyScrollOffset};
+    Vector2 textSize{MeasureTextEx(m_font, "XX", k_FontSizeTemp, k_FontSpacing)};
+
+    // Todays temperature.
+    const std::string tday{"Today"};
+    DrawTextEx(m_font, tday.c_str(), weeklyV, k_FontSizeTemp, k_FontSpacing, WHITE);
+    DrawTextEx(m_font, m_weatherData.high.c_str(), Vector2{rect.x + rect.width - textSize.x, weeklyV.y}, k_FontSizeTemp, k_FontSpacing, GetTemperatureColor(std::stoi(m_weatherData.high)));
+    DrawTextEx(m_font, m_weatherData.low.c_str(), Vector2{rect.x + rect.width * 0.50f, weeklyV.y}, k_FontSizeTemp, k_FontSpacing, GetTemperatureColor(std::stoi(m_weatherData.low)));
+
+
+    weeklyV.y += k_FontSizeTemp;
+
+    // DAY WEATHER_CODE LOW HIGH
+    for (const auto& day: m_weatherData.weeklyForecast)
+    {
+        DrawTextEx(m_font, day.day.c_str(), weeklyV, k_FontSizeTemp, k_FontSpacing, WHITE);
+        DrawTextEx(m_font, day.high.c_str(), Vector2{rect.x + rect.width - textSize.x, weeklyV.y}, k_FontSizeTemp, k_FontSpacing, GetTemperatureColor(std::stoi(day.high)));
+        DrawTextEx(m_font, day.low.c_str(), Vector2{rect.x + rect.width * 0.50f, weeklyV.y}, k_FontSizeTemp, k_FontSpacing, GetTemperatureColor(std::stoi(day.low)));
+
+        weeklyV.y += k_FontSizeTemp;
+    }
+
 }
 
-void ForecastLayer::HandleHourlyScrolling(const Rectangle& rect)
+void ForecastLayer::HandleScrolling(const Rectangle& rect, bool& isdragging)
 {
     Vector2 currMousePos = GetMousePosition();
 
@@ -155,12 +214,12 @@ void ForecastLayer::HandleHourlyScrolling(const Rectangle& rect)
     {
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         {
-            m_isDraggingHourly = true;
+            isdragging = true;
             m_lastMousePos = currMousePos;
         }
     }
 
-    if (m_isDraggingHourly)
+    if (isdragging)
     {
         if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
         {
@@ -170,7 +229,7 @@ void ForecastLayer::HandleHourlyScrolling(const Rectangle& rect)
         }
         else
         {
-            m_isDraggingHourly = false;
+            isdragging = false;
         }
     }
 }

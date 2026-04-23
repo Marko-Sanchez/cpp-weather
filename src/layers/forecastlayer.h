@@ -4,6 +4,7 @@
 #include <raylib.h>
 
 #include "layer.h"
+#include "render/weathericonatlas.h"
 #include "utility/weatherdata.h"
 
 namespace Layers
@@ -15,15 +16,21 @@ private:
     const int m_screenWidth;
     const int m_screenHeight;
 
-    Font m_font;
-
     Vector2 m_lastMousePos;
 
+    float   m_layerScrollOffset;
     float   m_hourlyScrollOffset;
+    float   m_weeklyScrollOffset;
     bool    m_isDraggingHourly;
+    bool    m_isDraggingWeekly;
+
+    Font m_font;
 
     // reference to static variable.
     utility::WeatherData& m_weatherData;
+
+    // texture atlas.
+    render::WeatherIconAtlas m_iconAtlas;
 
     // Draw Helpers.
     void DrawBackground() const;
@@ -31,7 +38,7 @@ private:
     void DrawHourlyForecast();
     void DrawWeeklyForecast();
 
-    void HandleHourlyScrolling(const Rectangle& rect);
+    void HandleScrolling(const Rectangle& rect, bool& isdragging);
 
     float CenterX(float elementwidth) const noexcept;
     bool CheckBounds(const Vector2& mouse, const Rectangle& bounds) const noexcept;
