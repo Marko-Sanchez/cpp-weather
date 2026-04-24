@@ -39,6 +39,7 @@ private:
     void DrawWeeklyForecast();
 
     void HandleScrolling(const Rectangle& rect, bool& isdragging);
+    void DrawHourScrollIndicator(const Rectangle panel, float maxScroll, float totalWidth) const;
 
     float CenterX(float elementwidth) const noexcept;
     bool CheckBounds(const Vector2& mouse, const Rectangle& bounds) const noexcept;

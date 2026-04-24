@@ -116,46 +116,67 @@ void ForecastLayer::DrawTitle() const
 void ForecastLayer::DrawHourlyForecast()
 {
     // Panel background.
-    const Rectangle rect{m_screenWidth * k_Margin, m_screenHeight * k_HourlyY, (m_screenWidth * 6.0f) * k_Margin, m_screenHeight * k_HourlyHeight};
-    DrawRectangleRounded(rect, k_PanelRoundness, k_PanelSegments, Fade(SKYBLUE, 0.3f));
+    const Rectangle panel{m_screenWidth * k_Margin, m_screenHeight * k_HourlyY, (m_screenWidth * 6.0f) * k_Margin, m_screenHeight * k_HourlyHeight};
+    DrawRectangleRounded(panel, k_PanelRoundness, k_PanelSegments, Fade(SKYBLUE, 0.3f));
 
-    const float xPadding{10.0f};
+    const auto xPadding{10.0f};
+    const auto yPadding{10.0f};
 
     // Title.
-    Vector2 titlelength{MeasureTextEx(m_font, k_hourlyTitle.c_str(), k_FontSizeHourly, k_FontSpacing)};
-    Vector2 titleV{rect.x + xPadding, rect.y + titlelength.y};
-    DrawTextEx(m_font, k_hourlyTitle.c_str(), titleV, k_FontSizeHourly, k_FontSpacing, WHITE);
+    Vector2 titleSize     {MeasureTextEx(m_font, k_hourlyTitle.c_str(), k_FontSizeHourly, k_FontSpacing)};
+    Vector2 titlePosition {panel.x + xPadding, panel.y + titleSize.y};
+    DrawTextEx(m_font, k_hourlyTitle.c_str(), titlePosition, k_FontSizeHourly, k_FontSpacing, WHITE);
 
-    const float columnWidth{65.0f};                                          // width of temp/hour/icon.
-    const auto  totalWidth {columnWidth * m_weatherData.hourlyForecast.size()};
-    const auto  maxScroll  {std::max(totalWidth - rect.width, 0.0f)};
+    // length of texts.
+    const auto columnWidth{m_iconAtlas.GetIconSize()};
+    const auto totalWidth {columnWidth * m_weatherData.hourlyForecast.size()};
+    const auto maxScroll  {std::max(totalWidth - panel.width, 0.0f)};
 
-    this->HandleScrolling(rect, m_isDraggingHourly);
+    this->HandleScrolling(panel, m_isDraggingHourly);
     m_hourlyScrollOffset = std::clamp(m_hourlyScrollOffset, 0.0f, maxScroll);
 
-    const float yTemp     {rect.y + rect.height * 0.25f};
-    const float yCondition{rect.y + rect.height * 0.50f};
-    const float yHour     {rect.y + rect.height * 0.75f};
 
-    const float xStart {xPadding + rect.x - m_hourlyScrollOffset};
+    // Space where hour forecast will be displayed.
+    auto areaTop      {titlePosition.y + yPadding};
+    auto areaBottom   {panel.y + panel.height - yPadding};
+    auto workingHeight{areaBottom - areaTop};
+
+    auto section     {workingHeight/ 3.0f};
+    auto centerTop   {areaTop + (section * 0.5f)};
+    auto centerMiddle{areaTop + (section * 1.5f)};
+    auto centerBottom{areaTop + (section * 2.5f)};
+
+    const auto yTemp     {centerTop - (k_FontSizeHourly * 0.5f)};
+    const auto yCondition{centerMiddle - (m_iconAtlas.GetIconSize() * 0.5f)};
+    const auto yHour     {centerBottom - (k_FontSizeHourly * 0.5f)};
+
+    const auto xStart {panel.x - m_hourlyScrollOffset};
 
     // Draw hourly forecast.
-    BeginScissorMode(rect.x, rect.y, rect.width, rect.height);
+    BeginScissorMode(panel.x, panel.y, panel.width, panel.height);
 
         std::string buffer;
         for (size_t i{0}; i < m_weatherData.hourlyForecast.size(); ++i)
         {
-            const auto& hour   = m_weatherData.hourlyForecast[i];
-            const float xCol   = xStart + (i * columnWidth);
+            const auto& hour    = m_weatherData.hourlyForecast[i];
+            const auto xCenter = xStart + (i * columnWidth) + (columnWidth / 2.0f);
 
-            // TODO: if data is not loaded in time default '---' is used and throws error on stoi.
             buffer = hour.temperature;
-            DrawTextEx(m_font, buffer.c_str(), Vector2{xCol, yTemp}, k_FontSizeHourly, k_FontSpacing, GetTemperatureColor(std::stoi(hour.temperature)));
+            Vector2 tempSize{MeasureTextEx(m_font, buffer.c_str(), k_FontSizeHourly, k_FontSpacing)};
+            Vector2 tempPos{xCenter - (tempSize.x / 2.0f), yTemp};
 
-            m_iconAtlas.DrawWeatherIcon(hour.condition, Vector2{xCol, yCondition}, 1.0f);
+            int tempVal = (buffer == "---") ? 0: std::stoi(buffer);
+            DrawTextEx(m_font, buffer.c_str(), tempPos, k_FontSizeHourly, k_FontSpacing, GetTemperatureColor(tempVal));
+
+            auto iconScale{1.0f};
+            auto iconWidth{m_iconAtlas.GetIconSize() * iconScale};
+            Vector2 iconPos{xCenter - (iconWidth / 2.0f), yCondition};
+            m_iconAtlas.DrawWeatherIcon(hour.condition, iconPos, iconScale);
 
             buffer = hour.hour;
-            DrawTextEx(m_font, buffer.c_str(), Vector2{xCol, yHour}, k_FontSizeHourly, k_FontSpacing, WHITE);
+            Vector2 hourSize{MeasureTextEx(m_font, buffer.c_str(), k_FontSizeHourly, k_FontSpacing)};
+            Vector2 hourPos{xCenter - (hourSize.x / 2.0f), yHour};
+            DrawTextEx(m_font, buffer.c_str(), hourPos, k_FontSizeHourly, k_FontSpacing, WHITE);
         }
 
     EndScissorMode();
@@ -163,17 +184,26 @@ void ForecastLayer::DrawHourlyForecast()
     // Scroll progress.
     if (maxScroll > 0.0f)
     {
-        const float scrollPercent{m_hourlyScrollOffset / maxScroll};
-        const float indicatorWidth{(rect.width / totalWidth) * rect.width};
-        const float indicatorX{rect.x + (scrollPercent * (rect.width - indicatorWidth))};
-
-        const float yPadding{8.0f};
-        const float indicatorY{rect.y + rect.height - yPadding};
-        const float edgePadding{10.0f};
-
-        const float clampedX{std::clamp(indicatorX, rect.x + edgePadding, rect.x + rect.width - indicatorWidth - edgePadding)};
-        DrawRectangleRounded(Rectangle{clampedX, indicatorY, indicatorWidth, 2.0f}, k_PanelRoundness, k_PanelSegments, Fade(WHITE, 0.5f));
+        this->DrawHourScrollIndicator(panel, maxScroll, totalWidth);
     }
+}
+
+void ForecastLayer::DrawHourScrollIndicator(const Rectangle panel, float maxScroll, float totalWidth) const
+{
+    const float yPadding{8.0f};
+    const float xPadding{10.0f};
+
+    const float scrollPercent{m_hourlyScrollOffset / maxScroll};
+
+    const float indicatorHeight{2.0f};
+    const float indicatorWidth{(panel.width / totalWidth) * panel.width};
+    const float indicatorX{panel.x + (scrollPercent * (panel.width - indicatorWidth))};
+    const float indicatorY{panel.y + panel.height - yPadding};
+
+    const float clampedX{std::clamp(indicatorX, panel.x + xPadding, panel.x + panel.width - indicatorWidth - xPadding)};
+    const Rectangle bar{clampedX, indicatorY, indicatorWidth, indicatorHeight};
+
+    DrawRectangleRounded(bar, k_PanelRoundness, k_PanelSegments, Fade(WHITE, 0.5f));
 }
 
 void ForecastLayer::DrawWeeklyForecast()
