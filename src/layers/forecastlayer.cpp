@@ -1,6 +1,7 @@
 #include "forecastlayer.h"
 
 #include <algorithm>
+#include <cctype>
 #include <string>
 
 #include <raylib.h>
@@ -208,32 +209,52 @@ void ForecastLayer::DrawHourScrollIndicator(const Rectangle panel, float maxScro
 
 void ForecastLayer::DrawWeeklyForecast()
 {
-    // Panel background.
-    const Rectangle rect{m_screenWidth * k_Margin, m_screenHeight * k_WeeklyY, (m_screenWidth * 6.0f) * k_Margin, m_screenHeight * k_WeeklyHeight};
-    DrawRectangleRounded(rect, k_PanelRoundness, k_PanelSegments, Fade(SKYBLUE, 0.6f));
+    const float panelOpacity{0.6f};
 
-    Vector2 weeklyV{rect.x + 10, rect.y - m_weeklyScrollOffset};
-    Vector2 textSize{MeasureTextEx(m_font, "XX", k_FontSizeTemp, k_FontSpacing)};
+    // Panel background.
+    const Rectangle panel
+    {
+        m_screenWidth * k_Margin,
+        m_screenHeight * k_WeeklyY,
+        m_screenWidth * (6.0f * k_Margin),
+        m_screenHeight * k_WeeklyHeight
+    };
+    DrawRectangleRounded(panel, k_PanelRoundness, k_PanelSegments, Fade(SKYBLUE, panelOpacity));
+
+    const Vector2 textSize{MeasureTextEx(m_font, "XX", k_FontSizeTemp, k_FontSpacing)};
+    const auto xHighPos{panel.x + panel.width - textSize.x};   // x position for high temp.
+    const auto xLowPos{panel.x + panel.width * 0.5f};          // x position for low temp.
+
+    Vector2 currentPosition{panel.x + 10, panel.y - m_weeklyScrollOffset};
 
     // Todays temperature.
-    const std::string tday{"Today"};
-    DrawTextEx(m_font, tday.c_str(), weeklyV, k_FontSizeTemp, k_FontSpacing, WHITE);
-    DrawTextEx(m_font, m_weatherData.high.c_str(), Vector2{rect.x + rect.width - textSize.x, weeklyV.y}, k_FontSizeTemp, k_FontSpacing, GetTemperatureColor(std::stoi(m_weatherData.high)));
-    DrawTextEx(m_font, m_weatherData.low.c_str(), Vector2{rect.x + rect.width * 0.50f, weeklyV.y}, k_FontSizeTemp, k_FontSpacing, GetTemperatureColor(std::stoi(m_weatherData.low)));
-
-
-    weeklyV.y += k_FontSizeTemp;
+    this->DrawDayRow("Today", m_weatherData.high, m_weatherData.low, currentPosition, xHighPos, xLowPos);
+    currentPosition.y += k_FontSizeTemp;
 
     // DAY WEATHER_CODE LOW HIGH
     for (const auto& day: m_weatherData.weeklyForecast)
     {
-        DrawTextEx(m_font, day.day.c_str(), weeklyV, k_FontSizeTemp, k_FontSpacing, WHITE);
-        DrawTextEx(m_font, day.high.c_str(), Vector2{rect.x + rect.width - textSize.x, weeklyV.y}, k_FontSizeTemp, k_FontSpacing, GetTemperatureColor(std::stoi(day.high)));
-        DrawTextEx(m_font, day.low.c_str(), Vector2{rect.x + rect.width * 0.50f, weeklyV.y}, k_FontSizeTemp, k_FontSpacing, GetTemperatureColor(std::stoi(day.low)));
-
-        weeklyV.y += k_FontSizeTemp;
+        this->DrawDayRow(day.day, day.high, day.low, currentPosition, xHighPos, xLowPos);
+        currentPosition.y += k_FontSizeTemp;
     }
+}
 
+void ForecastLayer::DrawDayRow(const std::string& day, const std::string& high, const std::string& low, Vector2 position, float xhigh, float xlow) const
+{
+    DrawTextEx(m_font, day.c_str(), position, k_FontSizeTemp, k_FontSpacing, WHITE);
+
+    int hightemp = isdigit(high.front()) ? std::stoi(high) : 0;
+    int lowtemp  = isdigit(low.front()) ? std::stoi(low) : 0;
+
+    DrawTextEx(m_font, high.c_str(),
+            Vector2{xhigh, position.y},
+            k_FontSizeTemp, k_FontSpacing,
+            GetTemperatureColor(hightemp));
+
+    DrawTextEx(m_font, low.c_str(),
+            Vector2{xlow, position.y},
+            k_FontSizeTemp, k_FontSpacing,
+            GetTemperatureColor(lowtemp));
 }
 
 void ForecastLayer::HandleScrolling(const Rectangle& rect, bool& isdragging)

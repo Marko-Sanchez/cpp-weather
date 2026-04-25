@@ -40,6 +40,7 @@ private:
 
     void HandleScrolling(const Rectangle& rect, bool& isdragging);
     void DrawHourScrollIndicator(const Rectangle panel, float maxScroll, float totalWidth) const;
+    void DrawDayRow(const std::string& day, const std::string& high, const std::string& low, Vector2 position, float xhigh, float xlow) const;
 
     float CenterX(float elementwidth) const noexcept;
     bool CheckBounds(const Vector2& mouse, const Rectangle& bounds) const noexcept;
