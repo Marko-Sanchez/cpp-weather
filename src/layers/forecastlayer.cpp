@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <string>
 
 #include <raylib.h>
@@ -31,6 +32,10 @@ namespace
     constexpr float k_PanelRoundness{0.2f};
     constexpr int k_PanelSegments{0}; // 0 let raylib decide.
 
+    constexpr float k_wheelMultiplier{60.0f};
+    constexpr float k_scrollSpeed{120.0f};
+    constexpr float k_scrollSmooth{12.0f};
+
     constexpr std::string k_hourlyTitle{"Hourly forecast"};
 
     Color GetTemperatureColor(int temp)
@@ -47,6 +52,8 @@ namespace
 ForecastLayer::ForecastLayer():
 m_screenWidth(512),
 m_screenHeight(1024),
+m_contentHeight(1500),
+m_targetScrollOffset(0.0f),
 m_layerScrollOffset(0.0f),
 m_hourlyScrollOffset(0.0f),
 m_weeklyScrollOffset(0.0f),
@@ -71,11 +78,28 @@ void ForecastLayer::OnEvent()
     {
         TransitionTo<Layers::AboutLayer>();
     }
+
+    float wheel{GetMouseWheelMove()};
+    if (wheel != 0)
+    {
+        m_targetScrollOffset -= wheel * k_wheelMultiplier;
+    }
+    if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S))
+    {
+        m_targetScrollOffset += k_scrollSpeed * GetFrameTime();
+    }
+    if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W))
+    {
+        m_targetScrollOffset -= k_scrollSpeed * GetFrameTime();
+    }
+
+    m_targetScrollOffset = std::clamp(m_targetScrollOffset, 0.0f, static_cast<float>(m_contentHeight));
 }
 
 void ForecastLayer::OnUpdate(float deltatime)
 {
     m_weatherData = utility::AppState::Get().currentweather;
+    m_layerScrollOffset = std::lerp(m_layerScrollOffset, m_targetScrollOffset, k_scrollSmooth * deltatime);
 }
 
 void ForecastLayer::OnRender()
@@ -98,26 +122,31 @@ void ForecastLayer::DrawTitle() const
 {
     const std::string highlow{std::format("H: {} L: {}", m_weatherData.high, m_weatherData.low)};
 
-    // Location.
-    const Vector2 titlesize{MeasureTextEx(m_font, m_weatherData.location.city.c_str(), k_FontSizeTitle, k_FontSpacing)};
-    const Vector2 titlepos{CenterX(titlesize.x), m_screenHeight * k_TitleY};
-
     // Current temperature.
-    const Vector2 tempsize{MeasureTextEx(m_font, m_weatherData.currentTemperature.c_str(), k_FontSizeTemp, k_FontSpacing)};
-    const Vector2 hlsize{MeasureTextEx(m_font, highlow.c_str(), k_FontSizeHighLow, k_FontSpacing)};
+    const Vector2 tempSize {MeasureTextEx(m_font, m_weatherData.currentTemperature.c_str(), k_FontSizeTemp, k_FontSpacing)};
+    const Vector2 hlSize   {MeasureTextEx(m_font, highlow.c_str(), k_FontSizeHighLow, k_FontSpacing)};
+    const Vector2 titleSize{MeasureTextEx(m_font, m_weatherData.location.city.c_str(), k_FontSizeTitle, k_FontSpacing)};
 
-    const Vector2 temppos{CenterX(tempsize.x), titlepos.y + titlesize.y};
-    const Vector2 hlpos{CenterX(hlsize.x), temppos.y + tempsize.y};
+    // Anchor point for title.
+    const Vector2 titlePos{CenterX(titleSize.x), m_screenHeight * k_TitleY - m_layerScrollOffset};
+    const Vector2 tempPos {CenterX(tempSize.x), titlePos.y + titleSize.y};
+    const Vector2 hlPos   {CenterX(hlSize.x), tempPos.y + tempSize.y};
 
-    DrawTextEx(m_font, m_weatherData.location.city.c_str(), titlepos, k_FontSizeTitle, k_FontSpacing, WHITE);
-    DrawTextEx(m_font, m_weatherData.currentTemperature.c_str(), temppos, k_FontSizeTemp, k_FontSpacing, WHITE);
-    DrawTextEx(m_font, highlow.c_str(), hlpos, k_FontSizeHighLow, k_FontSpacing, WHITE);
+    DrawTextEx(m_font, m_weatherData.location.city.c_str(), titlePos, k_FontSizeTitle, k_FontSpacing, WHITE);
+    DrawTextEx(m_font, m_weatherData.currentTemperature.c_str(), tempPos, k_FontSizeTemp, k_FontSpacing, WHITE);
+    DrawTextEx(m_font, highlow.c_str(), hlPos, k_FontSizeHighLow, k_FontSpacing, WHITE);
 }
 
 void ForecastLayer::DrawHourlyForecast()
 {
-    // Panel background.
-    const Rectangle panel{m_screenWidth * k_Margin, m_screenHeight * k_HourlyY, (m_screenWidth * 6.0f) * k_Margin, m_screenHeight * k_HourlyHeight};
+    // Panel background and anchor point for hourly forecast.
+    const Rectangle panel
+    {
+        m_screenWidth * k_Margin,
+        m_screenHeight * k_HourlyY - m_layerScrollOffset,
+        m_screenWidth * 6.0f * k_Margin,
+        m_screenHeight * k_HourlyHeight
+    };
     DrawRectangleRounded(panel, k_PanelRoundness, k_PanelSegments, Fade(SKYBLUE, 0.3f));
 
     const auto xPadding{10.0f};
@@ -209,8 +238,9 @@ void ForecastLayer::DrawHourScrollIndicator(const Rectangle panel, float maxScro
 
 void ForecastLayer::DrawWeeklyForecast()
 {
+    // Anchor point for weekly forecast.
     auto xStart{m_screenWidth * k_Margin};
-    auto yStart{m_screenHeight * k_WeeklyY};
+    auto yStart{m_screenHeight * k_WeeklyY - m_layerScrollOffset};
 
     auto cardWidth{m_screenWidth * (6.0f / 8.0f)};
     auto cardHeight{60.0f};

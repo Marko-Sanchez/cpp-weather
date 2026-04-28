@@ -15,9 +15,9 @@ private:
 
     const int m_screenWidth;
     const int m_screenHeight;
+    const int m_contentHeight;
 
-    Vector2 m_lastMousePos;
-
+    float   m_targetScrollOffset;
     float   m_layerScrollOffset;
     float   m_hourlyScrollOffset;
     float   m_weeklyScrollOffset;
@@ -25,6 +25,8 @@ private:
     bool    m_isDraggingWeekly;
 
     Font m_font;
+    Vector2 m_lastMousePos;
+
 
     // reference to static variable.
     utility::WeatherData& m_weatherData;
