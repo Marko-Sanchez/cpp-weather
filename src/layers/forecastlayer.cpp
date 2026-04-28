@@ -35,10 +35,10 @@ namespace
 
     Color GetTemperatureColor(int temp)
     {
-        if (temp >= 85) return Color{255, 69, 0, 255};   // Hot red-orange.
-        if (temp >= 75) return Color{255, 140, 0, 255};  // Warm orange.
-        if (temp >= 65) return Color{255, 215, 0, 255};  // Mild yellow.
-        if (temp >= 55) return Color{255, 206, 235, 255};// Cool sky blue.
+        if (temp >= 85) return Color{255, 69, 0, 255};  // Hot red-orange.
+        if (temp >= 75) return Color{255, 140, 0, 255}; // Warm orange.
+        if (temp >= 65) return Color{255, 215, 0, 255}; // Mild yellow.
+        if (temp >= 55) return Color{99, 153, 34, 255}; // Green.
 
         return BLUE;                                     // Cold blue.
     }
@@ -209,52 +209,106 @@ void ForecastLayer::DrawHourScrollIndicator(const Rectangle panel, float maxScro
 
 void ForecastLayer::DrawWeeklyForecast()
 {
-    const float panelOpacity{0.6f};
+    auto xStart{m_screenWidth * k_Margin};
+    auto yStart{m_screenHeight * k_WeeklyY};
 
-    // Panel background.
-    const Rectangle panel
+    auto cardWidth{m_screenWidth * (6.0f / 8.0f)};
+    auto cardHeight{60.0f};
+
+    Rectangle card
     {
-        m_screenWidth * k_Margin,
-        m_screenHeight * k_WeeklyY,
-        m_screenWidth * (6.0f * k_Margin),
-        m_screenHeight * k_WeeklyHeight
+        xStart,
+        yStart,
+        cardWidth,
+        cardHeight
     };
-    DrawRectangleRounded(panel, k_PanelRoundness, k_PanelSegments, Fade(SKYBLUE, panelOpacity));
+    this->DrawDayCard(card, "Today", m_weatherData.high, m_weatherData.low, true);
+    card.y += card.height + 6.0f;
 
-    const Vector2 textSize{MeasureTextEx(m_font, "XX", k_FontSizeTemp, k_FontSpacing)};
-    const auto xHighPos{panel.x + panel.width - textSize.x};   // x position for high temp.
-    const auto xLowPos{panel.x + panel.width * 0.5f};          // x position for low temp.
-
-    Vector2 currentPosition{panel.x + 10, panel.y - m_weeklyScrollOffset};
-
-    // Todays temperature.
-    this->DrawDayRow("Today", m_weatherData.high, m_weatherData.low, currentPosition, xHighPos, xLowPos);
-    currentPosition.y += k_FontSizeTemp;
-
-    // DAY WEATHER_CODE LOW HIGH
     for (const auto& day: m_weatherData.weeklyForecast)
     {
-        this->DrawDayRow(day.day, day.high, day.low, currentPosition, xHighPos, xLowPos);
-        currentPosition.y += k_FontSizeTemp;
+        this->DrawDayCard(card, day.day, day.high, day.low, false);
+        card.y += card.height + 12.0f;
     }
 }
 
-void ForecastLayer::DrawDayRow(const std::string& day, const std::string& high, const std::string& low, Vector2 position, float xhigh, float xlow) const
+void ForecastLayer::DrawDayCard(const Rectangle card, const std::string& day, const std::string& high, const std::string& low, bool isToday)
 {
-    DrawTextEx(m_font, day.c_str(), position, k_FontSizeTemp, k_FontSpacing, WHITE);
+    int hightemp {isdigit(high.front()) ? std::stoi(high) : 0};
+    int lowtemp  {isdigit(low.front()) ? std::stoi(low) : 0};
+    float padding{12.0f};
+    float columnWidth{64.0f};
 
-    int hightemp = isdigit(high.front()) ? std::stoi(high) : 0;
-    int lowtemp  = isdigit(low.front()) ? std::stoi(low) : 0;
+    // card background.
+    Color cardBg{Fade(BLACK, 0.75f)};
+    DrawRectangleRounded(card, k_PanelRoundness, k_PanelSegments, cardBg);
 
-    DrawTextEx(m_font, high.c_str(),
-            Vector2{xhigh, position.y},
-            k_FontSizeTemp, k_FontSpacing,
-            GetTemperatureColor(hightemp));
+    auto dayTextSize{MeasureTextEx(m_font, day.c_str(), k_FontSizeTemp, k_FontSpacing)};
+    Vector2 dayPos
+    {
+        card.x + padding,
+        card.y + (card.height - dayTextSize.y) * 0.5f
+    };
+    DrawTextEx(m_font, day.c_str(), dayPos, k_FontSizeTemp, k_FontSpacing, WHITE);
 
-    DrawTextEx(m_font, low.c_str(),
-            Vector2{xlow, position.y},
-            k_FontSizeTemp, k_FontSpacing,
-            GetTemperatureColor(lowtemp));
+    if (isToday)
+    {
+        const float badgeWidth{40.0f};
+        const float badgeHeight{16.0f};
+        const float badgeFontSize{12.0f};
+
+        Rectangle badge
+        {
+            card.x + dayTextSize.x + 12.0f,
+            card.y + card.height / 2.0f,
+            40,
+            16
+        };
+        DrawRectangleRounded(badge, k_PanelRoundness, k_PanelSegments, Fade(BLUE, 0.3f));
+
+        auto badgeTextSize{MeasureTextEx(m_font, "NOW", badgeFontSize, k_FontSpacing)};
+        Vector2 badgeTextPos
+        {
+            badge.x + (badgeWidth - badgeTextSize.x) * 0.5f,
+            badge.y + (badgeHeight - badgeTextSize.y) * 0.5f
+        };
+        DrawTextEx(m_font, "NOW", badgeTextPos, badgeFontSize, k_FontSpacing, BLUE);
+    }
+
+    // Temperature.
+    const auto labelFontSize{12.0f};
+    const auto highTextSize {MeasureTextEx(m_font, high.c_str(), k_FontSizeTemp, k_FontSpacing)};
+    const auto lowTextSize  {MeasureTextEx(m_font, low.c_str(), k_FontSizeTemp, k_FontSpacing)};
+    const auto highLabelSize{MeasureTextEx(m_font, "LOW", labelFontSize, k_FontSpacing)};
+    const auto lowLabelSize {MeasureTextEx(m_font, "HIGH", labelFontSize, k_FontSpacing)};
+
+    float highColumnX{card.x + card.width - (columnWidth * 2.0f) - padding};
+    Vector2 highLabelPos
+    {
+        highColumnX + (columnWidth - highLabelSize.x) * 0.5f,
+        card.y + 8.0f
+    };
+    Vector2 highTempPos
+    {
+        highColumnX + (columnWidth - highTextSize.x) * 0.5f,
+        card.y + card.height - highTextSize.y - 8.0f
+    };
+    DrawTextEx(m_font, "HIGH", highLabelPos, labelFontSize, k_FontSpacing, WHITE);
+    DrawTextEx(m_font, high.c_str(), highTempPos, k_FontSizeTemp, k_FontSpacing, GetTemperatureColor(hightemp));
+
+    float lowColumnX{card.x + card.width - columnWidth - padding};
+    Vector2 lowLabelPos
+    {
+        lowColumnX + (columnWidth - lowLabelSize.x) * 0.5f,
+        card.y + 8.0f
+    };
+    Vector2 lowTempPos
+    {
+        lowColumnX + (columnWidth - lowTextSize.x) * 0.5f,
+        card.y + card.height - lowTextSize.y - 8.0f
+    };
+    DrawTextEx(m_font, "LOW", lowLabelPos, labelFontSize, k_FontSpacing, WHITE);
+    DrawTextEx(m_font, low.c_str(), lowTempPos, k_FontSizeTemp, k_FontSpacing, GetTemperatureColor(lowtemp));
 }
 
 void ForecastLayer::HandleScrolling(const Rectangle& rect, bool& isdragging)
