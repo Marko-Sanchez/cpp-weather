@@ -22,7 +22,6 @@ private:
     float   m_hourlyScrollOffset;
     float   m_weeklyScrollOffset;
     bool    m_isDraggingHourly;
-    bool    m_isDraggingWeekly;
 
     Font m_font;
     Vector2 m_lastMousePos;
@@ -40,7 +39,7 @@ private:
     void DrawHourlyForecast();
     void DrawWeeklyForecast();
 
-    void HandleScrolling(const Rectangle& rect, bool& isdragging);
+    void HandleScrolling(const Rectangle& rect, bool& isDragging);
     void DrawHourScrollIndicator(const Rectangle panel, float maxScroll, float totalWidth) const;
     void DrawDayCard(const Rectangle card, const std::string& day, const std::string& high, const std::string& low, bool isToday);
 

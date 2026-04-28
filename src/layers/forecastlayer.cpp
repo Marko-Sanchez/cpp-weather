@@ -58,7 +58,6 @@ m_layerScrollOffset(0.0f),
 m_hourlyScrollOffset(0.0f),
 m_weeklyScrollOffset(0.0f),
 m_isDraggingHourly(false),
-m_isDraggingWeekly(false),
 m_weatherData(utility::AppState::Get().currentweather)
 {
     m_font = LoadFont("resources/fonts/UbuntuMonoNerdFontMono-Regular.ttf");
@@ -185,28 +184,25 @@ void ForecastLayer::DrawHourlyForecast()
     // Draw hourly forecast.
     BeginScissorMode(panel.x, panel.y, panel.width, panel.height);
 
-        std::string buffer;
         for (size_t i{0}; i < m_weatherData.hourlyForecast.size(); ++i)
         {
-            const auto& hour    = m_weatherData.hourlyForecast[i];
+            const auto& hour   = m_weatherData.hourlyForecast[i];
             const auto xCenter = xStart + (i * columnWidth) + (columnWidth / 2.0f);
 
-            buffer = hour.temperature;
-            Vector2 tempSize{MeasureTextEx(m_font, buffer.c_str(), k_FontSizeHourly, k_FontSpacing)};
+            Vector2 tempSize{MeasureTextEx(m_font, hour.temperature.c_str(), k_FontSizeHourly, k_FontSpacing)};
             Vector2 tempPos{xCenter - (tempSize.x / 2.0f), yTemp};
 
-            int tempVal = (buffer == "---") ? 0: std::stoi(buffer);
-            DrawTextEx(m_font, buffer.c_str(), tempPos, k_FontSizeHourly, k_FontSpacing, GetTemperatureColor(tempVal));
+            int tempVal{(!hour.temperature.empty() && isdigit(hour.temperature.back())) ? std::stoi(hour.temperature) : 0};
+            DrawTextEx(m_font, hour.temperature.c_str(), tempPos, k_FontSizeHourly, k_FontSpacing, GetTemperatureColor(tempVal));
 
             auto iconScale{1.0f};
             auto iconWidth{m_iconAtlas.GetIconSize() * iconScale};
             Vector2 iconPos{xCenter - (iconWidth / 2.0f), yCondition};
             m_iconAtlas.DrawWeatherIcon(hour.condition, iconPos, iconScale);
 
-            buffer = hour.hour;
-            Vector2 hourSize{MeasureTextEx(m_font, buffer.c_str(), k_FontSizeHourly, k_FontSpacing)};
+            Vector2 hourSize{MeasureTextEx(m_font, hour.hour.c_str(), k_FontSizeHourly, k_FontSpacing)};
             Vector2 hourPos{xCenter - (hourSize.x / 2.0f), yHour};
-            DrawTextEx(m_font, buffer.c_str(), hourPos, k_FontSizeHourly, k_FontSpacing, WHITE);
+            DrawTextEx(m_font, hour.hour.c_str(), hourPos, k_FontSizeHourly, k_FontSpacing, WHITE);
         }
 
     EndScissorMode();
@@ -244,6 +240,7 @@ void ForecastLayer::DrawWeeklyForecast()
 
     auto cardWidth{m_screenWidth * (6.0f / 8.0f)};
     auto cardHeight{60.0f};
+    auto cardSpacing{12.0f};
 
     Rectangle card
     {
@@ -253,12 +250,12 @@ void ForecastLayer::DrawWeeklyForecast()
         cardHeight
     };
     this->DrawDayCard(card, "Today", m_weatherData.high, m_weatherData.low, true);
-    card.y += card.height + 6.0f;
+    card.y += card.height + cardSpacing;
 
     for (const auto& day: m_weatherData.weeklyForecast)
     {
         this->DrawDayCard(card, day.day, day.high, day.low, false);
-        card.y += card.height + 12.0f;
+        card.y += card.height + cardSpacing;
     }
 }
 
@@ -267,7 +264,7 @@ void ForecastLayer::DrawDayCard(const Rectangle card, const std::string& day, co
     int hightemp {isdigit(high.front()) ? std::stoi(high) : 0};
     int lowtemp  {isdigit(low.front()) ? std::stoi(low) : 0};
     float padding{12.0f};
-    float columnWidth{64.0f};
+    float tempColumnWidth{64.0f};
 
     // card background.
     Color cardBg{Fade(BLACK, 0.75f)};
@@ -289,8 +286,8 @@ void ForecastLayer::DrawDayCard(const Rectangle card, const std::string& day, co
 
         Rectangle badge
         {
-            card.x + dayTextSize.x + 12.0f,
-            card.y + card.height / 2.0f,
+            card.x + dayTextSize.x + padding,
+            card.y + card.height * 0.5f,
             40,
             16
         };
@@ -309,39 +306,39 @@ void ForecastLayer::DrawDayCard(const Rectangle card, const std::string& day, co
     const auto labelFontSize{12.0f};
     const auto highTextSize {MeasureTextEx(m_font, high.c_str(), k_FontSizeTemp, k_FontSpacing)};
     const auto lowTextSize  {MeasureTextEx(m_font, low.c_str(), k_FontSizeTemp, k_FontSpacing)};
-    const auto highLabelSize{MeasureTextEx(m_font, "LOW", labelFontSize, k_FontSpacing)};
-    const auto lowLabelSize {MeasureTextEx(m_font, "HIGH", labelFontSize, k_FontSpacing)};
+    const auto highLabelSize{MeasureTextEx(m_font, "HIGH", labelFontSize, k_FontSpacing)};
+    const auto lowLabelSize {MeasureTextEx(m_font, "LOW", labelFontSize, k_FontSpacing)};
 
-    float highColumnX{card.x + card.width - (columnWidth * 2.0f) - padding};
+    float highColumnX{card.x + card.width - (tempColumnWidth * 2.0f) - padding};
     Vector2 highLabelPos
     {
-        highColumnX + (columnWidth - highLabelSize.x) * 0.5f,
+        highColumnX + (tempColumnWidth - highLabelSize.x) * 0.5f,
         card.y + 8.0f
     };
     Vector2 highTempPos
     {
-        highColumnX + (columnWidth - highTextSize.x) * 0.5f,
+        highColumnX + (tempColumnWidth - highTextSize.x) * 0.5f,
         card.y + card.height - highTextSize.y - 8.0f
     };
     DrawTextEx(m_font, "HIGH", highLabelPos, labelFontSize, k_FontSpacing, WHITE);
     DrawTextEx(m_font, high.c_str(), highTempPos, k_FontSizeTemp, k_FontSpacing, GetTemperatureColor(hightemp));
 
-    float lowColumnX{card.x + card.width - columnWidth - padding};
+    float lowColumnX{card.x + card.width - tempColumnWidth - padding};
     Vector2 lowLabelPos
     {
-        lowColumnX + (columnWidth - lowLabelSize.x) * 0.5f,
+        lowColumnX + (tempColumnWidth - lowLabelSize.x) * 0.5f,
         card.y + 8.0f
     };
     Vector2 lowTempPos
     {
-        lowColumnX + (columnWidth - lowTextSize.x) * 0.5f,
+        lowColumnX + (tempColumnWidth - lowTextSize.x) * 0.5f,
         card.y + card.height - lowTextSize.y - 8.0f
     };
     DrawTextEx(m_font, "LOW", lowLabelPos, labelFontSize, k_FontSpacing, WHITE);
     DrawTextEx(m_font, low.c_str(), lowTempPos, k_FontSizeTemp, k_FontSpacing, GetTemperatureColor(lowtemp));
 }
 
-void ForecastLayer::HandleScrolling(const Rectangle& rect, bool& isdragging)
+void ForecastLayer::HandleScrolling(const Rectangle& rect, bool& isDragging)
 {
     Vector2 currMousePos = GetMousePosition();
 
@@ -349,12 +346,12 @@ void ForecastLayer::HandleScrolling(const Rectangle& rect, bool& isdragging)
     {
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
         {
-            isdragging = true;
+            isDragging = true;
             m_lastMousePos = currMousePos;
         }
     }
 
-    if (isdragging)
+    if (isDragging)
     {
         if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
         {
@@ -364,7 +361,7 @@ void ForecastLayer::HandleScrolling(const Rectangle& rect, bool& isdragging)
         }
         else
         {
-            isdragging = false;
+            isDragging = false;
         }
     }
 }
