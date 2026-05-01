@@ -14,20 +14,24 @@ private:
     const int m_screenWidth;
     const int m_screenHeight;
 
-    float m_scrollOffset{0.0f};
-    float m_targetScroll{0.0f}; // how far down the page should we be.
-    float m_contentHeight{0.0f};// max length to scroll dow to.
+    float m_scrollOffset;
+    float m_targetScroll; // how far down the page should we be.
+    float m_contentHeight;// max length to scroll dow to.
 
-    // text handling.
-    int m_framecounter{};
+    int   m_framecounter;
+    bool  m_isPaused;
     Color m_colorRandom;
-    Font m_font;
+
+    Font      m_font;
+    Music     m_redAudio;
+    Texture2D m_redImage;
 
     // Draw Helpers.
     void DrawBackground() const;
     void DrawTitle() const;
     void DrawSubTitle() const;
     void DrawBody() const;
+    void DrawOtherBody() const;
     void DrawScrollbar() const;
 
 public:

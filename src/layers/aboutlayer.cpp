@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <raylib.h>
 #include <raymath.h>
+#include <sstream>
 #include <string_view>
 
 #include "titlelayer.h"
@@ -33,7 +34,7 @@ float MaxScroll(float contentHeight, float screenHeight) noexcept
 }
 
 // TODO: Move function out of private namespace, to allow other layers to use.
-void DrawTextInBounds(Rectangle bounds, const char* text, Font font, float fontsize, float spacing, int selectStart, int selectLength)
+void DrawTextInBounds(Rectangle bounds, const char* text, Font font, float fontsize, float spacing)
 {
     const unsigned int textLength{TextLength(text)}; // length in bytes.
 
@@ -54,9 +55,8 @@ void DrawTextInBounds(Rectangle bounds, const char* text, Font font, float fonts
 
     int startLine{-1};
     int endLine{-1};
-    int lastk{-1};
 
-    for (int byteIndex{0}, k{0}; byteIndex < textLength; ++byteIndex, ++k)
+    for (int byteIndex{0}; byteIndex < textLength; ++byteIndex)
     {
         int codepointByteCount{0};
         int codepoint{GetCodepoint(&text[byteIndex], &codepointByteCount)};
@@ -127,10 +127,6 @@ void DrawTextInBounds(Rectangle bounds, const char* text, Font font, float fonts
                 xOffSet = xPadding;
                 glyphWidth = 0;
                 byteIndex = startLine;
-
-                int tmp{lastk};
-                lastk = k - 1;
-                k = tmp;
             }
         }
         // Draw text.
@@ -141,14 +137,6 @@ void DrawTextInBounds(Rectangle bounds, const char* text, Font font, float fonts
             {
                 break;
             }
-
-            // if user 'selects' text, set background to show its been selected.
-            bool isGlyphSelected{false};
-            if ((selectStart >= 0) && (k >= selectStart) && (k < (selectStart + selectLength)))
-            {
-                isGlyphSelected = true;
-            }
-
             if (codepoint == '\n')
             {
                 yOffSet += Y_INCREMENT;
@@ -157,7 +145,7 @@ void DrawTextInBounds(Rectangle bounds, const char* text, Font font, float fonts
             // Draw current character glyph.
             else if ((codepoint != ' ') && (codepoint != '\t'))
             {
-                DrawTextCodepoint(font, codepoint, Vector2{bounds.x + xOffSet, bounds.y + yOffSet}, fontsize, isGlyphSelected ? GRAY: BLACK);
+                DrawTextCodepoint(font, codepoint, Vector2{bounds.x + xOffSet, bounds.y + yOffSet}, fontsize, BLACK);
             }
 
             // reset.
@@ -168,11 +156,6 @@ void DrawTextInBounds(Rectangle bounds, const char* text, Font font, float fonts
 
                 startLine = endLine;
                 endLine = -1;
-
-                glyphWidth = 0;
-                selectStart += lastk - k;
-                k = lastk;
-
                 state = STATE::MEASURE_STATE;
             }
         }
@@ -182,17 +165,81 @@ void DrawTextInBounds(Rectangle bounds, const char* text, Font font, float fonts
         {
             xOffSet += glyphWidth;
         }
-    }// for (int byteIndex{0}, k{0}; byteIndex < textLength; ++byteIndex, ++k)
+    }// for (int byteIndex{0}; byteIndex < textLength; ++byteIndex)
+}
+
+float ProcessWrappedText(Font font, const char* text, Rectangle bounds, float fontsize, float fontspacing, Color color, bool toDraw)
+{
+    const float lineHeight{fontsize + fontspacing};
+    float xPos{bounds.x};
+    float yPos{bounds.y};
+
+    std::string word;
+    std::string currentLine;
+
+    std::istringstream stream{text};
+
+    auto flushLine = [&](const std::string& line)
+    {
+        if (toDraw && !line.empty())
+        {
+            DrawTextEx(font, line.c_str(), {xPos, yPos}, fontsize, fontspacing, color);
+        }
+
+        yPos += lineHeight;
+        currentLine.clear();
+    };
+
+    while (stream >> word)
+    {
+        std::string canidate{currentLine.empty() ? word : currentLine + " " + word};
+        Vector2 textSize{MeasureTextEx(font, canidate.c_str(), fontsize, fontspacing)};
+
+        if (textSize.x > bounds.width && !currentLine.empty())
+        {
+            flushLine(currentLine);
+            currentLine = word;
+        }
+        else
+        {
+            currentLine = canidate;
+        }
+    }
+
+    if (!currentLine.empty())
+    {
+        flushLine(currentLine);
+    }
+
+    return yPos - bounds.y;
+}
+
+float MeasureWrappedTextHeight(Font font, const char* text, float rectwidth, float fontsize, float spacing)
+{
+    Rectangle panel{0, 0, rectwidth, 0};
+    return ProcessWrappedText(font, text, panel, fontsize, spacing, WHITE, false);
 }
 }// anonymous namespace
 
 AboutLayer::AboutLayer():
 m_screenWidth(512),
 m_screenHeight(1024),
+m_scrollOffset(0.0f),
+m_targetScroll(0.0f),
+m_contentHeight(0.0f),
+m_framecounter(0.0f),
+m_isPaused(false),
 m_colorRandom(RED)
 {
+    InitAudioDevice();
+
     m_contentHeight = static_cast<float>(m_screenHeight * 2.0f);
     m_font = LoadFont("resources/fonts/UbuntuMonoNerdFontMono-Regular.ttf");
+    m_redAudio = LoadMusicStream("resources/audio/redaudio.mp3");
+    m_redImage = LoadTexture("resources/images/redimage.png");
+
+    PlayMusicStream(m_redAudio);
+    SetMusicVolume(m_redAudio, 0.8f);
 }
 
 AboutLayer::~AboutLayer()
@@ -201,6 +248,13 @@ AboutLayer::~AboutLayer()
     {
         UnloadFont(m_font);
     }
+    if (m_redImage.id > 0)
+    {
+        UnloadTexture(m_redImage);
+    }
+
+    UnloadMusicStream(m_redAudio);
+    CloseAudioDevice();
 }
 
 void AboutLayer::OnEvent()
@@ -229,10 +283,26 @@ void AboutLayer::OnEvent()
     }
 
     m_targetScroll = Clamp(m_targetScroll, 0.0f, MaxScroll(m_contentHeight, m_screenHeight));
+
+    // Audio.
+    if (IsKeyPressed(KEY_P))
+    {
+        m_isPaused = !m_isPaused;
+        if (m_isPaused)
+        {
+            PauseMusicStream(m_redAudio);
+        }
+        else
+        {
+            ResumeMusicStream(m_redAudio);
+        }
+    }
 }
 
 void AboutLayer::OnUpdate(float deltatime)
 {
+    UpdateMusicStream(m_redAudio);
+
     // lerp allows smooth transition between two points: offset and target.
     m_scrollOffset = lerp(m_scrollOffset, m_targetScroll, k_scrollSmooth * deltatime);
 
@@ -242,6 +312,8 @@ void AboutLayer::OnUpdate(float deltatime)
         m_colorRandom.g = static_cast<char>(GetRandomValue(0, 255));
         m_colorRandom.b = static_cast<char>(GetRandomValue(0, 255));
         m_colorRandom.a = 200;
+
+        m_framecounter = 0;
     }
 }
 
@@ -254,6 +326,9 @@ void AboutLayer::OnRender()
         this->DrawTitle();
         this->DrawSubTitle();
         this->DrawBody();
+        this->DrawOtherBody();
+
+        DrawTextureEx(m_redImage, Vector2{m_screenWidth * 0.37f, m_screenHeight * 0.35f - m_scrollOffset}, 0.0f, 0.3f, WHITE);
 
         DrawText("[1] Back | Scroll Wheel / Arrow keys to navigate", 10, m_screenHeight - 18, 10, Color{255, 255, 255, 100});
     EndDrawing();
@@ -297,8 +372,8 @@ void AboutLayer::DrawSubTitle() const
         DrawTextEx(m_font, k_subTitle.data(), Vector2{x, y}, k_fontSizeSubTitle, k_fontSpacing, m_colorRandom);
 
         // Add padding between text and rectangle line.
-        float linepadding{8};
-        float linepadding2{16};
+        const float linepadding{8};
+        const float linepadding2{16};
         Rectangle rectline{x - linepadding, y - linepadding, textsize.x + linepadding2, textsize.y + linepadding2};
         DrawRectangleLinesEx(rectline, 4, MAROON);
     }
@@ -307,23 +382,41 @@ void AboutLayer::DrawSubTitle() const
 void AboutLayer::DrawBody() const
 {
     const char* body =
-    "Dog One to Dog Two. Do you copy ? Dog one to Dog Two. Do you copy ?\n\
-    Message from averagefumoappreciator:\n\
-    A quack doctor just fucking zapped my weiner and testicle violently with maximum blast\n\
-    Dog One to Dog Two. Transmition over. Transmition Over.";
+    "Revolution is not a crime; rebellion is justified!";
 
-    const float x_origin{m_screenWidth / 4.0f};
+    const float x_origin{m_screenWidth / 8.0f};
     const float y_origin{(m_screenHeight / 4.0f) - m_scrollOffset};
 
-    const float rectWidth{m_screenWidth / 2.0f};
-    const float rectHeight{m_screenHeight / 2.0f};
+    const float rectWidth{276.0f};
+    const float rectHeight = MeasureWrappedTextHeight(m_font, body, rectWidth, k_fontSizeBody, k_fontSpacing);
 
     if (y_origin > -1.0f * rectHeight && y_origin < (m_screenHeight + rectHeight))
     {
-        Rectangle rect{x_origin, y_origin, rectWidth, rectHeight};
-        DrawRectangleRec(rect, Fade(MAROON, 0.3f));
+        const Rectangle rect{x_origin, y_origin, rectWidth, rectHeight};
 
-        DrawTextInBounds(rect, body, m_font, k_fontSizeBody, k_fontSpacing, 0, 0);
+        DrawRectangleRec(rect, Fade(GREEN, 0.4f));
+        ProcessWrappedText(m_font, body, rect, k_fontSizeBody, k_fontSpacing, RED, true);
+    }
+}
+
+void AboutLayer::DrawOtherBody() const
+{
+    const char* quote = "All reactionaries are paper tigers. In appearance \
+                        the reactionaries are terrifying, but in reality, \
+                        they are not so powerfull.";
+
+    const float xPosition{m_screenWidth * 0.25f};
+    const float yPosition{m_screenHeight * 0.55f - m_scrollOffset};
+
+    const float rectWidth{m_screenWidth * 0.5f};
+    const float rectHeight{MeasureWrappedTextHeight(m_font, quote, rectWidth, k_fontSizeBody, k_fontSpacing)};
+
+    if (yPosition > -1.0f * rectHeight && yPosition < (m_screenHeight + rectHeight))
+    {
+        const Rectangle rect{xPosition, yPosition, rectWidth, rectHeight};
+
+        DrawRectangleRec(rect, Fade(BLUE, 0.5f));
+        ProcessWrappedText(m_font, quote, rect, k_fontSizeBody, k_fontSpacing, GREEN, true);
     }
 }
 }// namespace Layers
