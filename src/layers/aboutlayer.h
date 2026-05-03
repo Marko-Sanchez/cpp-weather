@@ -16,7 +16,7 @@ private:
 
     float m_scrollOffset;
     float m_targetScroll; // how far down the page should we be.
-    float m_contentHeight;// max length to scroll dow to.
+    float m_contentHeight;// max length to scroll down to.
 
     int   m_framecounter;
     bool  m_isPaused;

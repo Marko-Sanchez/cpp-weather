@@ -1,5 +1,6 @@
 add_library(cppweather-render INTERFACE
     weathericonatlas.h
+    textdecorator.h
 )
 
 target_include_directories(cppweather-render
