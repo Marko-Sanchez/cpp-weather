@@ -2,10 +2,10 @@ add_library(cppweather-render
     weathericonatlas.h
     textdecorator.h
     drawablecomponent.h
-    imagecomponent.h
-    imagecomponent.cpp
-    textcomponent.h
-    textcomponent.cpp
+    imageelement.h
+    imageelement.cpp
+    textelement.h
+    textelement.cpp
     paneldecorator.h
     paneldecorator.cpp
     colordecorator.h
