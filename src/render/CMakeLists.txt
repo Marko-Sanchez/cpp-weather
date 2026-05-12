@@ -6,6 +6,7 @@ add_library(cppweather-render
     imageelement.cpp
     textelement.h
     textelement.cpp
+    componentdecorator.h
     paneldecorator.h
     paneldecorator.cpp
     colordecorator.h

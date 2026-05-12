@@ -3,7 +3,7 @@
 namespace render
 {
 ColorDecorator::ColorDecorator(std::unique_ptr<DrawableComponent>&& component)
-    :_component(std::move(component)),
+    :ComponentDecorator(std::move(component)),
     _color(RED),
     _frameCounter(0)
 {}
@@ -28,15 +28,5 @@ void ColorDecorator::OnUpdate(const float delta)
     _component->UpdateColor(_color);
 
     _component->OnUpdate(delta);
-}
-
-void ColorDecorator::OnRender(const float scrollOffset) const
-{
-    _component->OnRender(scrollOffset);
-}
-
-Rectangle ColorDecorator::GetBounds(const float scrollOffset) const
-{
-    return _component->GetBounds(scrollOffset);
 }
 }// namespace render

@@ -3,20 +3,10 @@
 namespace render
 {
 CullingDecorator::CullingDecorator(std::unique_ptr<DrawableComponent>&& component, int width, int height)
-    :_component(std::move(component)),
+    :ComponentDecorator(std::move(component)),
     _screenWidth(width),
     _screenHeight(height)
 {}
-
-void CullingDecorator::OnEvent()
-{
-    _component->OnEvent();
-}
-
-void CullingDecorator::OnUpdate(const float delta)
-{
-    _component->OnUpdate(delta);
-}
 
 void CullingDecorator::OnRender(const float scrollOffset) const
 {
@@ -26,10 +16,5 @@ void CullingDecorator::OnRender(const float scrollOffset) const
     {
         _component->OnRender(scrollOffset);
     }
-}
-
-Rectangle CullingDecorator::GetBounds(const float scrollOffset) const
-{
-    return _component->GetBounds(scrollOffset);
 }
 }// namespace render
