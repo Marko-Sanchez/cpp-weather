@@ -20,8 +20,8 @@ class DrawableComponent
         virtual ~DrawableComponent() = default;
 
         virtual void OnEvent() {}
-        virtual void OnUpdate(const float delta) {}
-        virtual void OnRender(const float scrollOffset) const {}
+        virtual void OnUpdate(const float delta = 0.0f) {}
+        virtual void OnRender(const float scrollOffset = 0.0f) const {}
 
         virtual Rectangle GetBounds(const float scrollOffset) const {return Rectangle{0.0f, 0.0f, 0.0f, 0.0f};}
         virtual void UpdateColor(const Color color) {}
