@@ -5,8 +5,12 @@
 #include <raymath.h>
 #include <string_view>
 
+#include "render/colordecorator.h"
+#include "render/cullingdecorator.h"
+#include "render/imageelement.h"
+#include "render/paneldecorator.h"
+#include "render/textelement.h"
 #include "titlelayer.h"
-#include "render/textdecorator.h"
 
 namespace Layers
 {
@@ -25,9 +29,29 @@ constexpr int k_fontSizeSubTitle {32};
 constexpr int k_fontSizeBody     {16};
 constexpr int k_fontSpacing      {2};
 
+constexpr std::string_view k_fontPath {"resources/fonts/UbuntuMonoNerdFontMono-Regular.ttf"};
+constexpr std::string_view k_audioPath{"resources/audio/redaudio.mp3"};
+constexpr std::string_view k_imagePath{"resources/images/redimage.png"};
+
 constexpr std::string_view k_title    {"About"};
 constexpr std::string_view k_subTitle {"Cpp-Weather"};
 constexpr std::string_view k_footer   {"[1] Back | Scroll Wheel / Arrow keys to navigate"};
+
+constexpr std::string_view k_quotationsA =
+    {
+    "Revolution is not a crime; rebellion is justified!"
+    };
+constexpr std::string_view k_quotationsB =
+    {
+    "All reactionaries are paper tigers. In appearance "
+    "the reactionaries are terrifying, but in reality, "
+    "they are not so powerfull."
+    };
+constexpr std::string_view k_quotationsC =
+    {
+    "Yet struggle is inherent in identity "
+    "and without struggle there can be no identity"
+    };
 
 float MaxScroll(float contentHeight, float screenHeight) noexcept
 {
@@ -35,30 +59,142 @@ float MaxScroll(float contentHeight, float screenHeight) noexcept
 }
 }// anonymous namespace
 
-AboutLayer::AboutLayer():
-m_screenWidth(512),
-m_screenHeight(1024),
-m_scrollOffset(0.0f),
-m_targetScroll(0.0f),
-m_contentHeight(0.0f),
-m_framecounter(0.0f),
-m_isPaused(false),
-m_colorRandom(RED)
+AboutLayer::AboutLayer()
+    :m_screenWidth(GetScreenWidth()),
+    m_screenHeight(GetScreenHeight()),
+    m_scrollOffset(0.0f),
+    m_targetScroll(0.0f),
+    m_contentHeight(0.0f),
+    m_isPaused(false)
 {
     InitAudioDevice();
 
     m_contentHeight = static_cast<float>(m_screenHeight * 2.0f);
 
-    m_font     = LoadFont("resources/fonts/UbuntuMonoNerdFontMono-Regular.ttf");
-    m_redAudio = LoadMusicStream("resources/audio/redaudio.mp3");
-    m_redImage = LoadTexture("resources/images/redimage.png");
+    m_font     = LoadFont(k_fontPath.data());
+    m_redAudio = LoadMusicStream(k_audioPath.data());
+    m_redImage = LoadTexture(k_imagePath.data());
 
     PlayMusicStream(m_redAudio);
-    SetMusicVolume(m_redAudio, 0.8f);
+    SetMusicVolume(m_redAudio, 0.6f);
+
+    m_composition.emplace_back
+    (
+     std::make_unique<render::CullingDecorator>
+     (
+         std::make_unique<render::TextElement>
+         (
+          &m_font, k_title, (m_screenWidth - MeasureTextEx(m_font, k_title.data(), k_fontSizeTitle, k_fontSpacing).x) * 0.5f + 2.0f,
+          60.0f + 2.0f, m_screenWidth, k_fontSizeTitle, k_fontSpacing, Color{0, 0, 0, 100}, true
+         ),m_screenWidth, m_screenHeight
+     )
+    );
+
+    m_composition.emplace_back
+    (
+     std::make_unique<render::CullingDecorator>
+     (
+         std::make_unique<render::TextElement>
+         (
+          &m_font, k_title, (m_screenWidth - MeasureTextEx(m_font, k_title.data(), k_fontSizeTitle, k_fontSpacing).x) * 0.5f,
+          60.0f, m_screenWidth, k_fontSizeTitle, k_fontSpacing, WHITE, true
+         ),m_screenWidth, m_screenHeight
+     )
+    );
+
+    m_composition.emplace_back
+    (
+     std::make_unique<render::CullingDecorator>
+     (
+         std::make_unique<render::ColorDecorator>
+         (
+          std::make_unique<render::TextElement>
+          (
+           &m_font, k_subTitle,
+           (m_screenWidth - MeasureTextEx(m_font, k_subTitle.data(), k_fontSizeSubTitle, k_fontSpacing).x) * 0.50f,
+           128.0f, m_screenWidth * 0.50f, k_fontSizeSubTitle, k_fontSpacing, WHITE, true
+          )
+         ),
+        m_screenWidth, m_screenHeight
+     )
+    );
+
+    m_composition.emplace_back
+    (
+     std::make_unique<render::CullingDecorator>
+     (
+         std::make_unique<render::ImageElement>
+         (
+          &m_redImage, m_screenWidth * 0.37f, m_screenHeight * 0.35f, 0.0f, 0.3f, WHITE, true
+         ),
+         m_screenWidth, m_screenHeight
+     )
+    );
+
+    m_composition.emplace_back
+    (
+     std::make_unique<render::CullingDecorator>
+     (
+         std::make_unique<render::PanelDecorator>
+         (
+          std::make_unique<render::TextElement>
+          (
+           &m_font, k_quotationsA, m_screenWidth * 0.125f, m_screenHeight * 0.25f, 276.0f, k_fontSizeBody, k_fontSpacing, RED, true
+          ),
+          Fade(GREEN, 0.40f)
+         ),
+         m_screenWidth, m_screenHeight
+     )
+    );
+
+    m_composition.emplace_back
+    (
+     std::make_unique<render::CullingDecorator>
+     (
+         std::make_unique<render::PanelDecorator>
+         (
+          std::make_unique<render::TextElement>
+          (
+          &m_font, k_quotationsB, m_screenWidth * 0.25f, m_screenHeight * 0.55f, m_screenWidth * 0.50f, k_fontSizeBody, k_fontSpacing, GREEN, true
+          ),
+          Fade(BLUE, 0.5f)
+         ),
+         m_screenWidth, m_screenHeight
+     )
+    );
+
+    m_composition.emplace_back
+    (
+     std::make_unique<render::CullingDecorator>
+     (
+        std::make_unique<render::PanelDecorator>
+        (
+         std::make_unique<render::ColorDecorator>
+         (
+             std::make_unique<render::TextElement>
+             (
+              &m_font, k_quotationsC, m_screenWidth * 0.15f, m_screenHeight * 0.75f, m_screenWidth * 0.75f, k_fontSizeBody, k_fontSpacing, RED, true
+             )
+         ),
+         YELLOW
+        ),
+        m_screenWidth, m_screenHeight
+     )
+    );
+
+    m_composition.emplace_back
+    (
+     std::make_unique<render::TextElement>
+     (
+      &m_font, k_footer, 10.0f, m_screenHeight - 28.0f, m_screenWidth, 10.0f, k_fontSpacing, Color{255, 255, 255, 150}, false
+     )
+    );
 }
 
 AboutLayer::~AboutLayer()
 {
+    m_composition.clear();
+
     if (m_font.texture.id > 0 && m_font.texture.id != GetFontDefault().texture.id)
     {
         UnloadFont(m_font);
@@ -108,6 +244,11 @@ void AboutLayer::OnEvent()
             ResumeMusicStream(m_redAudio);
         }
     }
+
+    for (auto& comp: m_composition)
+    {
+        comp->OnEvent();
+    }
 }
 
 void AboutLayer::OnUpdate(float deltatime)
@@ -116,15 +257,9 @@ void AboutLayer::OnUpdate(float deltatime)
 
     // lerp allows smooth transition between two points: offset and target.
     m_scrollOffset = lerp(m_scrollOffset, m_targetScroll, k_scrollSmooth * deltatime);
-
-    if (++m_framecounter % 45 == 0)
+    for (auto& comp: m_composition)
     {
-        m_colorRandom.r = static_cast<char>(GetRandomValue(0, 255));
-        m_colorRandom.g = static_cast<char>(GetRandomValue(0, 255));
-        m_colorRandom.b = static_cast<char>(GetRandomValue(0, 255));
-        m_colorRandom.a = 200;
-
-        m_framecounter = 0;
+        comp->OnUpdate(deltatime);
     }
 }
 
@@ -134,14 +269,10 @@ void AboutLayer::OnRender()
         ClearBackground(BLACK);
 
         this->DrawBackground();
-        this->DrawTitle();
-        this->DrawSubTitle();
-        this->DrawBody();
-        this->DrawOtherBody();
-
-        DrawTextureEx(m_redImage, Vector2{m_screenWidth * 0.37f, m_screenHeight * 0.35f - m_scrollOffset}, 0.0f, 0.3f, WHITE);
-
-        DrawText(k_footer.data(), 10, m_screenHeight - 18, 10, Color{255, 255, 255, 100});
+        for (auto& comp: m_composition)
+        {
+            comp->OnRender(m_scrollOffset);
+        }
     EndDrawing();
 }
 
@@ -149,86 +280,5 @@ void AboutLayer::DrawBackground() const
 {
     DrawRectangle(0, 0, m_screenWidth, m_screenHeight, BROWN);
     DrawRectangleLinesEx(Rectangle{0.0f, 0.0f, static_cast<float>(m_screenWidth), static_cast<float>(m_screenHeight)}, 6, Fade(BLACK, 0.3f));
-}
-
-void AboutLayer::DrawTitle() const
-{
-    const int textWidth   {MeasureText(k_title.data(), k_fontSizeTitle)};
-    const int yStarterPos {60};
-
-    const int xPosition       {(m_screenWidth - textWidth) / 2};
-    const int yPosition       {static_cast<int>(yStarterPos - m_scrollOffset)};
-    const int xShadowPosition {xPosition + 2};
-    const int yShadowPosition {yPosition + 2};
-
-    // Only draw if we are above the screenheight (bottom of screen) or below the -fontsize (past the top to include text).
-    if (yPosition > -k_fontSizeTitle && yPosition < m_screenHeight)
-    {
-        DrawText(k_title.data(), xShadowPosition, yShadowPosition, k_fontSizeTitle, Color{0, 0, 0, 100});
-        DrawText(k_title.data(), xPosition, yPosition, k_fontSizeTitle, WHITE);
-    }
-}
-
-void AboutLayer::DrawSubTitle() const
-{
-    const Vector2 textsize  {MeasureTextEx(m_font, k_subTitle.data(), k_fontSizeSubTitle, k_fontSpacing)};
-    const float yStarterPos {128.0f};
-
-    const float xPosition {(m_screenWidth - textsize.x) / 2};
-    const float yPosition {yStarterPos - m_scrollOffset};
-
-    // Only draw if we are above the screenheight (bottom of screen) or below the -fontsize (past the top to include text).
-    if (yPosition > -k_fontSizeSubTitle && yPosition < m_screenHeight)
-    {
-        DrawTextEx(m_font, k_subTitle.data(), Vector2{xPosition, yPosition}, k_fontSizeSubTitle, k_fontSpacing, m_colorRandom);
-
-        // Add padding between text and rectangle line.
-        const float linepadding  {8.0f};
-        const float linepadding2 {16.0f};
-        const Rectangle rectline {xPosition - linepadding, yPosition - linepadding, textsize.x + linepadding2, textsize.y + linepadding2};
-        DrawRectangleLinesEx(rectline, 4, MAROON);
-    }
-}
-
-void AboutLayer::DrawBody() const
-{
-    const char* text =
-    "Revolution is not a crime; rebellion is justified!";
-
-    const float xPosition {m_screenWidth / 8.0f};
-    const float yPosition {(m_screenHeight / 4.0f) - m_scrollOffset};
-
-    const float rectWidth  {276.0f};
-    const float rectHeight {render::MeasureWrappedTextHeight(m_font, text, rectWidth, k_fontSizeBody, k_fontSpacing)};
-
-    if (yPosition > -1.0f * rectHeight && yPosition < (m_screenHeight + rectHeight))
-    {
-        const Rectangle panel {xPosition, yPosition, rectWidth, rectHeight};
-
-        DrawRectangleRec(panel, Fade(GREEN, 0.4f));
-        render::DrawWrappedText(m_font, panel, text, k_fontSizeBody, k_fontSpacing, RED);
-    }
-}
-
-void AboutLayer::DrawOtherBody() const
-{
-    const char* text =
-    "All reactionaries are paper tigers. In appearance "
-    "the reactionaries are terrifying, but in reality, "
-    "they are not so powerfull.";
-
-    const float xPosition {m_screenWidth * 0.25f};
-    const float yPosition {(m_screenHeight * 0.55f) - m_scrollOffset};
-
-    const float rectWidth  {m_screenWidth * 0.5f};
-    const float rectHeight {render::MeasureWrappedTextHeight(m_font, text, rectWidth, k_fontSizeBody, k_fontSpacing)};
-
-    if (yPosition > -1.0f * rectHeight && yPosition < (m_screenHeight + rectHeight))
-    {
-        const Rectangle panel {xPosition, yPosition, rectWidth, rectHeight};
-
-        DrawRectangleRec(panel, Fade(BLUE, 0.5f));
-        render::DrawWrappedText(m_font, panel, text, k_fontSizeBody, k_fontSpacing, GREEN);
-    }
 }
 }// namespace Layers

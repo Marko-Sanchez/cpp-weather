@@ -4,44 +4,41 @@
 #include "layer.h"
 
 #include <raylib.h>
+#include <list>
+
+#include "render/drawablecomponent.h"
 
 namespace Layers
 {
 class AboutLayer: public Layer
 {
-private:
+    private:
 
-    const int m_screenWidth;
-    const int m_screenHeight;
+        const int m_screenWidth;
+        const int m_screenHeight;
 
-    float m_scrollOffset;
-    float m_targetScroll; // how far down the page should we be.
-    float m_contentHeight;// max length to scroll down to.
+        float m_scrollOffset;
+        float m_targetScroll; // how far down the page should we be.
+        float m_contentHeight;// max length to scroll down to.
 
-    int   m_framecounter;
-    bool  m_isPaused;
-    Color m_colorRandom;
+        bool  m_isPaused;
 
-    Font      m_font;
-    Music     m_redAudio;
-    Texture2D m_redImage;
+        Font      m_font;
+        Music     m_redAudio;
+        Texture2D m_redImage;
 
-    // Draw Helpers.
-    void DrawBackground() const;
-    void DrawTitle() const;
-    void DrawSubTitle() const;
-    void DrawBody() const;
-    void DrawOtherBody() const;
-    void DrawScrollbar() const;
+        std::list<std::unique_ptr<render::DrawableComponent>> m_composition;
 
-public:
+        void DrawBackground() const;
 
-    AboutLayer();
-    ~AboutLayer();
+    public:
 
-    virtual void OnEvent() override;
-    virtual void OnUpdate(float deltatime) override;
-    virtual void OnRender() override;
+        AboutLayer();
+        ~AboutLayer();
+
+        virtual void OnEvent() override;
+        virtual void OnUpdate(float deltatime) override;
+        virtual void OnRender() override;
 };
 }// namespace Layers
 #endif
