@@ -23,10 +23,10 @@ namespace
     constexpr int k_FontSpacing     {2};
 
     constexpr float k_Margin       {1.0f / 8.0f};
-    constexpr float k_TitleY       {1.0f / 8.0f};
-    constexpr float k_HourlyY      {1.0f / 4.0f};
+    constexpr float k_TitleY       {1.0f / 20.0f};
+    constexpr float k_HourlyY      {1.0f / 6.0f};
     constexpr float k_HourlyHeight {2.0f / 10.0f};
-    constexpr float k_WeeklyY      {1.0f / 2.0f};
+    constexpr float k_WeeklyY      {4.0f / 10.0f};
     constexpr float k_WeeklyHeight {1.0f / 4.0f};
 
     constexpr float k_PanelRoundness {0.2f};
