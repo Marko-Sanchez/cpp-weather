@@ -6,3 +6,10 @@ Applications uses c++-23 and cmake version (2.25.0)+. Using open-source Weather 
 uses: user provided location, location based on IP, or defaults location to Redmond, Washington. Once data is received it is parsed
 and displayed; either on terminal or via the GUI. User argument '--no-gui' displays the current days hourly forecast to the terminal,
 default application behavior displays current days hourly and next four days average forecast to GUI.
+
+
+<p float="left">
+    <img src="resources/images/readme-examples/title.png" width="30%" />
+    <img src="resources/images/readme-examples/example2.png" width="30%" />
+    <img src="resources/images/readme-examples/example1.png" width="30%" />
+</p>
