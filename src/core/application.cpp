@@ -114,7 +114,7 @@ void Application::ProcessTransition()
 }
 
 /*
- * Search for forecast layer if it exist, consume weather data.
+ * Retrieve data from thread safe queue.
 */
 void Application::ProcessWeatherUpdate()
 {
