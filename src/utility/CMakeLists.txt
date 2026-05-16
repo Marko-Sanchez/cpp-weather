@@ -9,6 +9,7 @@ add_library(cppweather-utility
     appstate.h
     iresult.h
     errorhandling.h
+    signal.h
 )
 
 target_include_directories(cppweather-utility
