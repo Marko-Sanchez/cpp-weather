@@ -8,6 +8,9 @@
 #include <raylib.h>
 
 #include "layers/aboutlayer.h"
+#include "render/cullingdecorator.h"
+#include "render/dynamictextelement.h"
+#include "render/textelement.h"
 #include "utility/weatherdata.h"
 #include "utility/appstate.h"
 
@@ -63,6 +66,7 @@ m_isDraggingHourly(false),
 m_weatherData(utility::AppState::Get().currentweather)
 {
     m_font = LoadFont(k_fontPath.data());
+    this->BuildTitle();
 }
 
 ForecastLayer::~ForecastLayer()
@@ -94,12 +98,28 @@ void ForecastLayer::OnEvent()
     }
 
     m_targetScrollOffset = std::clamp(m_targetScrollOffset, 0.0f, static_cast<float>(m_contentHeight));
+    for (auto& comp: m_compositor)
+    {
+        comp->OnEvent();
+    }
 }
 
 void ForecastLayer::OnUpdate(float deltatime)
 {
-    m_weatherData = utility::AppState::Get().currentweather;
+    // isStale gets set in Application::ProcessWeatherUpdate().
+    if (!utility::AppState::Get().currentweather.isStale)
+    {
+        m_weatherData = utility::AppState::Get().currentweather;
+        m_signal.Broadcast();
+
+        utility::AppState::Get().currentweather.isStale = true;
+    }
+
     m_layerScrollOffset = std::lerp(m_layerScrollOffset, m_targetScrollOffset, k_scrollSmooth * deltatime);
+    for (auto& comp: m_compositor)
+    {
+        comp->OnUpdate(deltatime);
+    }
 }
 
 void ForecastLayer::OnRender()
@@ -107,9 +127,12 @@ void ForecastLayer::OnRender()
     BeginDrawing();
         ClearBackground(RAYWHITE);
         this->DrawBackground();
-        this->DrawTitle();
         this->DrawHourlyForecast();
         this->DrawWeeklyForecast();
+        for (auto& comp: m_compositor)
+        {
+            comp->OnRender(m_layerScrollOffset);
+        }
     EndDrawing();
 }
 
@@ -118,13 +141,13 @@ void ForecastLayer::DrawBackground() const
     DrawRectangleGradientV(0, 0, m_screenWidth, m_screenHeight, BLUE, SKYBLUE);
 }
 
-void ForecastLayer::DrawTitle() const
+void ForecastLayer::BuildTitle()
 {
-    const std::string highlow{std::format("H: {} L: {}", m_weatherData.high, m_weatherData.low)};
+    const auto m_highlow = std::format("H: {} L: {}", m_weatherData.high, m_weatherData.low);
 
     // Current temperature.
     const Vector2 tempSize {MeasureTextEx(m_font, m_weatherData.currentTemperature.c_str(), k_FontSizeTemp, k_FontSpacing)};
-    const Vector2 hlSize   {MeasureTextEx(m_font, highlow.c_str(), k_FontSizeHighLow, k_FontSpacing)};
+    const Vector2 hlSize   {MeasureTextEx(m_font, m_highlow.c_str(), k_FontSizeHighLow, k_FontSpacing)};
     const Vector2 titleSize{MeasureTextEx(m_font, m_weatherData.location.city.c_str(), k_FontSizeTitle, k_FontSpacing)};
 
     // Anchor point for title.
@@ -132,9 +155,45 @@ void ForecastLayer::DrawTitle() const
     const Vector2 tempPos {CenterX(tempSize.x), titlePos.y + titleSize.y};
     const Vector2 hlPos   {CenterX(hlSize.x), tempPos.y + tempSize.y};
 
-    DrawTextEx(m_font, m_weatherData.location.city.c_str(), titlePos, k_FontSizeTitle, k_FontSpacing, WHITE);
-    DrawTextEx(m_font, m_weatherData.currentTemperature.c_str(), tempPos, k_FontSizeTemp, k_FontSpacing, WHITE);
-    DrawTextEx(m_font, highlow.c_str(), hlPos, k_FontSizeHighLow, k_FontSpacing, WHITE);
+    auto cityFunc = [this](void) {return m_weatherData.location.city;};
+    auto tempFunc = [this](void) {return m_weatherData.currentTemperature;};
+    auto hlFunc   = [this](void) {return std::format("H: {} L: {}", m_weatherData.high, m_weatherData.low);};
+
+    m_compositor.emplace_back
+    (
+     std::make_unique<render::CullingDecorator>
+     (
+         std::make_unique<render::DynamicTextElement>
+         (
+          &m_font, cityFunc, m_signal, m_weatherData.location.city, titlePos.x, titlePos.y, m_screenWidth, k_FontSizeTitle, k_FontSpacing, WHITE, true
+         ),
+         m_screenWidth, m_screenHeight
+     )
+    );
+
+    m_compositor.emplace_back
+    (
+     std::make_unique<render::CullingDecorator>
+     (
+         std::make_unique<render::DynamicTextElement>
+         (
+          &m_font, tempFunc, m_signal, m_weatherData.currentTemperature, tempPos.x, tempPos.y, m_screenWidth, k_FontSizeTemp, k_FontSpacing, WHITE, true
+         ),
+         m_screenWidth, m_screenHeight
+     )
+    );
+
+    m_compositor.emplace_back
+    (
+     std::make_unique<render::CullingDecorator>
+     (
+         std::make_unique<render::DynamicTextElement>
+         (
+          &m_font, hlFunc, m_signal, m_highlow, hlPos.x, hlPos.y, m_screenWidth, k_FontSizeHighLow, k_FontSpacing, WHITE, true
+         ),
+         m_screenWidth, m_screenHeight
+     )
+    );
 }
 
 void ForecastLayer::DrawHourlyForecast()
