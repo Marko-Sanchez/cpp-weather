@@ -8,6 +8,8 @@ add_library(cppweather-render
     textelement.cpp
     dynamictextelement.h
     dynamictextelement.cpp
+    hourlystripelement.h
+    hourlystripelement.cpp
     componentdecorator.h
     paneldecorator.h
     paneldecorator.cpp

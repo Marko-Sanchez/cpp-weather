@@ -34,7 +34,6 @@ class ForecastLayer: public Layer
         utility::WeatherData& m_weatherData;
         utility::Signal       m_signal;
 
-        // texture atlas.
         render::WeatherIconAtlas m_iconAtlas;
 
         std::list<std::unique_ptr<render::DrawableComponent>> m_compositor;
@@ -42,7 +41,7 @@ class ForecastLayer: public Layer
         // Draw Helpers.
         void DrawBackground() const;
         void BuildTitle();
-        void DrawHourlyForecast();
+        void BuildHourlyForecast();
         void DrawWeeklyForecast();
 
         void HandleScrolling(const Rectangle& rect, bool& isDragging);

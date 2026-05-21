@@ -10,6 +10,8 @@
 #include "layers/aboutlayer.h"
 #include "render/cullingdecorator.h"
 #include "render/dynamictextelement.h"
+#include "render/hourlystripelement.h"
+#include "render/paneldecorator.h"
 #include "render/textelement.h"
 #include "utility/weatherdata.h"
 #include "utility/appstate.h"
@@ -66,11 +68,15 @@ m_isDraggingHourly(false),
 m_weatherData(utility::AppState::Get().currentweather)
 {
     m_font = LoadFont(k_fontPath.data());
+
     this->BuildTitle();
+    this->BuildHourlyForecast();
 }
 
 ForecastLayer::~ForecastLayer()
 {
+    m_compositor.clear();
+
     if (m_font.texture.id > 0 && m_font.texture.id != GetFontDefault().texture.id)
     {
         UnloadFont(m_font);
@@ -127,8 +133,8 @@ void ForecastLayer::OnRender()
     BeginDrawing();
         ClearBackground(RAYWHITE);
         this->DrawBackground();
-        this->DrawHourlyForecast();
         this->DrawWeeklyForecast();
+
         for (auto& comp: m_compositor)
         {
             comp->OnRender(m_layerScrollOffset);
@@ -151,13 +157,13 @@ void ForecastLayer::BuildTitle()
     const Vector2 titleSize{MeasureTextEx(m_font, m_weatherData.location.city.c_str(), k_FontSizeTitle, k_FontSpacing)};
 
     // Anchor point for title.
-    const Vector2 titlePos{CenterX(titleSize.x), m_screenHeight * k_TitleY - m_layerScrollOffset};
+    const Vector2 titlePos{CenterX(titleSize.x), m_screenHeight * k_TitleY};
     const Vector2 tempPos {CenterX(tempSize.x), titlePos.y + titleSize.y};
     const Vector2 hlPos   {CenterX(hlSize.x), tempPos.y + tempSize.y};
 
-    auto cityFunc = [this](void) {return m_weatherData.location.city;};
-    auto tempFunc = [this](void) {return m_weatherData.currentTemperature;};
-    auto hlFunc   = [this](void) {return std::format("H: {} L: {}", m_weatherData.high, m_weatherData.low);};
+    auto cityFunc = [&city = m_weatherData.location.city]                 (void) {return city;};
+    auto tempFunc = [&temperature = m_weatherData.currentTemperature]     (void) {return temperature;};
+    auto hlFunc   = [&high = m_weatherData.high, &low = m_weatherData.low](void) {return std::format("H: {} L: {}", high, low);};
 
     m_compositor.emplace_back
     (
@@ -196,82 +202,56 @@ void ForecastLayer::BuildTitle()
     );
 }
 
-void ForecastLayer::DrawHourlyForecast()
+void ForecastLayer::BuildHourlyForecast()
 {
-    // Panel background and anchor point for hourly forecast.
     const Rectangle panel
     {
-        m_screenWidth * k_Margin,
-        m_screenHeight * k_HourlyY - m_layerScrollOffset,
-        m_screenWidth * 6.0f * k_Margin,
+        m_screenWidth  * k_Margin,
+        m_screenHeight * k_HourlyY,
+        m_screenWidth  * 6.0f * k_Margin,
         m_screenHeight * k_HourlyHeight
     };
-    DrawRectangleRounded(panel, k_PanelRoundness, k_PanelSegments, Fade(SKYBLUE, 0.3f));
 
-    const auto xPadding{10.0f};
-    const auto yPadding{10.0f};
+    const Vector2 titleSize     {MeasureTextEx(m_font, k_hourlyTitle.data(), k_FontSizeHourly, k_FontSpacing)};
+    const Vector2 titlePosition {panel.x, panel.y + titleSize.y};
 
-    // Title.
-    Vector2 titleSize     {MeasureTextEx(m_font, k_hourlyTitle.data(), k_FontSizeHourly, k_FontSpacing)};
-    Vector2 titlePosition {panel.x + xPadding, panel.y + titleSize.y};
-    DrawTextEx(m_font, k_hourlyTitle.data(), titlePosition, k_FontSizeHourly, k_FontSpacing, WHITE);
+    m_compositor.emplace_back
+    (
+     std::make_unique<render::CullingDecorator>
+     (
+          std::make_unique<render::PanelDecorator>
+          (
+             std::make_unique<render::TextElement>
+             (
+              &m_font, k_hourlyTitle, titlePosition.x, titlePosition.y, panel.width, k_FontSizeHourly, k_FontSpacing, WHITE, true
+             ),
+             Fade(GRAY, 0.75f), true
+          ),
+         m_screenWidth, m_screenHeight
+     )
+    );
 
-    // length of texts.
-    const auto columnWidth{m_iconAtlas.GetIconSize()};
-    const auto totalWidth {columnWidth * m_weatherData.hourlyForecast.size()};
-    const auto maxScroll  {std::max(totalWidth - panel.width, 0.0f)};
+    auto titlePanel = m_compositor.back()->GetBounds(0.0f);
 
-    this->HandleScrolling(panel, m_isDraggingHourly);
-    m_hourlyScrollOffset = std::clamp(m_hourlyScrollOffset, 0.0f, maxScroll);
+    auto hourFunc = [&hourlyForecast = m_weatherData.hourlyForecast](void) {return hourlyForecast;};
+    auto hourHeight {panel.height - titlePanel.height};
 
-
-    // Space where hour forecast will be displayed.
-    auto areaTop      {titlePosition.y + yPadding};
-    auto areaBottom   {panel.y + panel.height - yPadding};
-    auto workingHeight{areaBottom - areaTop};
-
-    auto section     {workingHeight/ 3.0f};
-    auto centerTop   {areaTop + (section * 0.5f)};
-    auto centerMiddle{areaTop + (section * 1.5f)};
-    auto centerBottom{areaTop + (section * 2.5f)};
-
-    const auto yTemp     {centerTop - (k_FontSizeHourly * 0.5f)};
-    const auto yCondition{centerMiddle - (m_iconAtlas.GetIconSize() * 0.5f)};
-    const auto yHour     {centerBottom - (k_FontSizeHourly * 0.5f)};
-
-    const auto xStart {panel.x - m_hourlyScrollOffset};
-
-    // Draw hourly forecast.
-    BeginScissorMode(panel.x, panel.y, panel.width, panel.height);
-
-        for (size_t i{0}; i < m_weatherData.hourlyForecast.size(); ++i)
-        {
-            const auto& hour   = m_weatherData.hourlyForecast[i];
-            const auto xCenter = xStart + (i * columnWidth) + (columnWidth / 2.0f);
-
-            Vector2 tempSize{MeasureTextEx(m_font, hour.temperature.c_str(), k_FontSizeHourly, k_FontSpacing)};
-            Vector2 tempPos{xCenter - (tempSize.x / 2.0f), yTemp};
-
-            int tempVal{(!hour.temperature.empty() && isdigit(hour.temperature.back())) ? std::stoi(hour.temperature) : 0};
-            DrawTextEx(m_font, hour.temperature.c_str(), tempPos, k_FontSizeHourly, k_FontSpacing, GetTemperatureColor(tempVal));
-
-            auto iconScale{1.0f};
-            auto iconWidth{m_iconAtlas.GetIconSize() * iconScale};
-            Vector2 iconPos{xCenter - (iconWidth / 2.0f), yCondition};
-            m_iconAtlas.DrawWeatherIcon(hour.condition, iconPos, iconScale);
-
-            Vector2 hourSize{MeasureTextEx(m_font, hour.hour.c_str(), k_FontSizeHourly, k_FontSpacing)};
-            Vector2 hourPos{xCenter - (hourSize.x / 2.0f), yHour};
-            DrawTextEx(m_font, hour.hour.c_str(), hourPos, k_FontSizeHourly, k_FontSpacing, WHITE);
-        }
-
-    EndScissorMode();
-
-    // Scroll progress.
-    if (maxScroll > 0.0f)
-    {
-        this->DrawHourScrollIndicator(panel, maxScroll, totalWidth);
-    }
+    m_compositor.emplace_back
+    (
+     std::make_unique<render::CullingDecorator>
+     (
+         std::make_unique<render::PanelDecorator>
+         (
+             std::make_unique<render::HourlyStripElement>
+             (
+              m_weatherData.hourlyForecast, hourFunc, m_signal, &m_iconAtlas,
+              &m_font, panel.x, titlePanel.y + titlePanel.height, panel.width, hourHeight, k_FontSizeHourly, k_FontSpacing, WHITE
+             ),
+             Fade(BLACK, 0.75f), true
+         ),
+         m_screenWidth, m_screenHeight
+     )
+    );
 }
 
 void ForecastLayer::DrawHourScrollIndicator(const Rectangle panel, float maxScroll, float totalWidth) const
