@@ -87,6 +87,7 @@ void HourlyStripElement::OnEvent()
 // TODO: scroll offset done in OnUpdate() instead. OnRender() no longer takes in a val.
 void HourlyStripElement::OnRender(const float scrollOffset) const
 {
+    // TODO: some type of check to see if _forecast data is available ?
     // TODO: temporary for testing, requires changing
     _mutableScroll = scrollOffset;
     const auto yScrolled {_yPosition - scrollOffset};

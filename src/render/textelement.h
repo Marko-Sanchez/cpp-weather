@@ -20,9 +20,9 @@ private:
     const float _textWidth;
     const float _fontSize;
     const float _fontSpacing;
+    Color       _color;
     const bool  _isScrollable;
 
-    Color _color;
     float _textHeight;
 
 public:

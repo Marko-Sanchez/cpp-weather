@@ -20,7 +20,7 @@ class HourlyStripElement: public DrawableComponent
         HourArray _forecast;
 
         std::function<HourArray()> _provider;
-        utility::Signal::Token _token;
+        utility::Signal::Token     _token;
 
         const render::WeatherIconAtlas* _weatherIcons;
         const Font*                     _font;
@@ -31,7 +31,7 @@ class HourlyStripElement: public DrawableComponent
         const float _viewHeight;
         const float _fontSize;
         const float _fontSpacing;
-        Color _color;
+        Color       _color;
 
         mutable float _mutableScroll;
         float   _horizontalScrollOffset;

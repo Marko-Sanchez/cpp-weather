@@ -41,7 +41,7 @@ namespace
     constexpr float k_scrollSpeed     {120.0f};
     constexpr float k_scrollSmooth    {12.0f};
 
-    constexpr std::string_view k_hourlyTitle {"Hourly forecast"};
+    constexpr std::string_view k_hourlyTitle {"24-hour forecast"};
 
     constexpr std::string_view k_fontPath {"resources/fonts/UbuntuMonoNerdFontMono-Regular.ttf"};
 
@@ -171,7 +171,8 @@ void ForecastLayer::BuildTitle()
      (
          std::make_unique<render::DynamicTextElement>
          (
-          &m_font, cityFunc, m_signal, m_weatherData.location.city, titlePos.x, titlePos.y, m_screenWidth, k_FontSizeTitle, k_FontSpacing, WHITE, true
+          cityFunc, m_signal,
+          &m_font, m_weatherData.location.city, titlePos.x, titlePos.y, m_screenWidth, k_FontSizeTitle, k_FontSpacing, WHITE, true
          ),
          m_screenWidth, m_screenHeight
      )
@@ -183,7 +184,8 @@ void ForecastLayer::BuildTitle()
      (
          std::make_unique<render::DynamicTextElement>
          (
-          &m_font, tempFunc, m_signal, m_weatherData.currentTemperature, tempPos.x, tempPos.y, m_screenWidth, k_FontSizeTemp, k_FontSpacing, WHITE, true
+          tempFunc, m_signal,
+          &m_font, m_weatherData.currentTemperature, tempPos.x, tempPos.y, m_screenWidth, k_FontSizeTemp, k_FontSpacing, WHITE, true
          ),
          m_screenWidth, m_screenHeight
      )
@@ -195,7 +197,8 @@ void ForecastLayer::BuildTitle()
      (
          std::make_unique<render::DynamicTextElement>
          (
-          &m_font, hlFunc, m_signal, m_highlow, hlPos.x, hlPos.y, m_screenWidth, k_FontSizeHighLow, k_FontSpacing, WHITE, true
+          hlFunc, m_signal,
+          &m_font, m_highlow, hlPos.x, hlPos.y, m_screenWidth, k_FontSizeHighLow, k_FontSpacing, WHITE, true
          ),
          m_screenWidth, m_screenHeight
      )

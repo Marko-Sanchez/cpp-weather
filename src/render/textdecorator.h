@@ -5,6 +5,7 @@
 
 namespace render
 {
+// TODO: should x and y offsets be variable ?
 inline float DrawTextInBounds(const Font font, const Rectangle bounds, const char* text, const float fontsize, const float spacing, const Color color, const bool toDraw)
 {
     const int textLength     {static_cast<int>(TextLength(text))};
