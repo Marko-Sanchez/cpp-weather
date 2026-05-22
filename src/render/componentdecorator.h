@@ -21,10 +21,10 @@ class ComponentDecorator: public DrawableComponent
         {}
 
         void OnEvent() override {_component->OnEvent();}
-        void OnUpdate(const float delta = 0.0f) override {_component->OnUpdate(delta);}
-        void OnRender(const float scrollOffset = 0.0f) const override {_component->OnRender(scrollOffset);}
+        void OnUpdate(const float scrollOffset = 0.0f) override {_component->OnUpdate(scrollOffset);}
+        void OnRender() const override {_component->OnRender();}
 
-        Rectangle GetBounds(const float scrollOffset = 0.0f) const override {return _component->GetBounds(scrollOffset);}
+        Rectangle GetBounds() const override {return _component->GetBounds();}
         void UpdateColor(const Color color) override {_component->UpdateColor(color);}
 };
 }// namespace render

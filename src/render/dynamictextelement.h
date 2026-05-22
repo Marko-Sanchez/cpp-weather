@@ -23,19 +23,21 @@ class DynamicTextElement: public DrawableComponent
         const float _fontSize;
         const float _fontSpacing;
         Color       _color;
-        const bool  _isScrollable;
 
         float _textHeight;
+        float _yParentScrolloffset;
+        bool _doScroll;
 
         void RefreshText();
 
     public:
 
-        DynamicTextElement(std::function<std::string(void)> provider, utility::Signal& signal, const Font* font, const std::string& text, const float xPosition, const float yPosition, const float textWidth, const float fontSize, const float fonstSpacing, const Color color, bool isScrollable);
+        DynamicTextElement(std::function<std::string(void)> provider, utility::Signal& signal, const Font* font, const std::string& text, const float xPosition, const float yPosition, const float textWidth, const float fontSize, const float fonstSpacing, const Color color, bool scroll = true);
 
-        void OnRender(const float scrollOffset) const override;
+        void OnUpdate(const float scrollOffset) override;
+        void OnRender() const override;
 
-        Rectangle GetBounds(const float scrollOffset) const override;
+        Rectangle GetBounds() const override;
         void UpdateColor(const Color color) override;
 
 };

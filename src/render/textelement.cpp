@@ -5,7 +5,7 @@
 
 namespace render
 {
-TextElement::TextElement(const Font* font, const std::string_view text, const float xPosition, const float yPosition, const float width, const float fontSize, const float fontSpacing, Color color, bool isScrollable)
+TextElement::TextElement(const Font* font, const std::string_view text, const float xPosition, const float yPosition, const float width, const float fontSize, const float fontSpacing, Color color, bool scroll)
     :_font(font),
     _text(text),
     _xPosition(xPosition),
@@ -14,21 +14,30 @@ TextElement::TextElement(const Font* font, const std::string_view text, const fl
     _fontSize(fontSize),
     _fontSpacing(fontSpacing),
     _color(color),
-    _isScrollable(isScrollable)
+    _doScroll(scroll)
 {
     _textHeight = MeasureWrappedTextHeight(*_font, _text.data(), _textWidth, _fontSize, _fontSpacing);
+    _yParentScrolloffset = 0.0f;
 }
 
-void TextElement::OnRender(const float scrollOffset) const
+void TextElement::OnUpdate(const float scrollOffset)
 {
-    const Rectangle bounds{GetBounds(scrollOffset)};
+    _yParentScrolloffset = scrollOffset;
+}
+
+void TextElement::OnRender() const
+{
+    const Rectangle bounds{GetBounds()};
     render::DrawWrappedText(*_font, bounds, _text.data(), _fontSize, _fontSpacing, _color);
 }
 
-Rectangle TextElement::GetBounds(const float scrollOffset) const
+Rectangle TextElement::GetBounds() const
 {
     auto yPos {_yPosition};
-    if (_isScrollable) yPos -= scrollOffset;
+    if (_doScroll)
+    {
+        yPos -= _yParentScrolloffset;
+    }
 
     return Rectangle{_xPosition, yPos, _textWidth, _textHeight};
 }

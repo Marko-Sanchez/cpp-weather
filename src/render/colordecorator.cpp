@@ -23,10 +23,10 @@ void ColorDecorator::OnEvent()
     _component->OnEvent();
 }
 
-void ColorDecorator::OnUpdate(const float delta)
+void ColorDecorator::OnUpdate(const float scrollOffset)
 {
     _component->UpdateColor(_color);
 
-    _component->OnUpdate(delta);
+    _component->OnUpdate(scrollOffset);
 }
 }// namespace render

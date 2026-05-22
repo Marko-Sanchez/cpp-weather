@@ -8,13 +8,11 @@ CullingDecorator::CullingDecorator(std::unique_ptr<DrawableComponent>&& componen
     _screenHeight(height)
 {}
 
-void CullingDecorator::OnRender(const float scrollOffset) const
+void CullingDecorator::OnRender() const
 {
-
-    auto bounds = _component->GetBounds(scrollOffset);
-    if (bounds.y > -1.0f * _screenHeight && bounds.y < (_screenHeight + bounds.height))
+    if (auto bounds = _component->GetBounds(); bounds.y > -1.0f * _screenHeight && bounds.y < (_screenHeight + bounds.height))
     {
-        _component->OnRender(scrollOffset);
+        _component->OnRender();
     }
 }
 }// namespace render

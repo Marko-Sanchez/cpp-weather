@@ -62,10 +62,10 @@ float MaxScroll(float contentHeight, float screenHeight) noexcept
 AboutLayer::AboutLayer()
     :m_screenWidth(GetScreenWidth()),
     m_screenHeight(GetScreenHeight()),
-    m_scrollOffset(0.0f),
+    m_layerScrollOffset(0.0f),
     m_targetScroll(0.0f),
     m_contentHeight(0.0f),
-    m_isPaused(false)
+    m_audioPaused(false)
 {
     InitAudioDevice();
 
@@ -85,7 +85,7 @@ AboutLayer::AboutLayer()
          std::make_unique<render::TextElement>
          (
           &m_font, k_title, (m_screenWidth - MeasureTextEx(m_font, k_title.data(), k_fontSizeTitle, k_fontSpacing).x) * 0.5f + 2.0f,
-          60.0f + 2.0f, m_screenWidth, k_fontSizeTitle, k_fontSpacing, Color{0, 0, 0, 100}, true
+          60.0f + 2.0f, m_screenWidth, k_fontSizeTitle, k_fontSpacing, Color{0, 0, 0, 100}
          ),m_screenWidth, m_screenHeight
      )
     );
@@ -97,7 +97,7 @@ AboutLayer::AboutLayer()
          std::make_unique<render::TextElement>
          (
           &m_font, k_title, (m_screenWidth - MeasureTextEx(m_font, k_title.data(), k_fontSizeTitle, k_fontSpacing).x) * 0.5f,
-          60.0f, m_screenWidth, k_fontSizeTitle, k_fontSpacing, WHITE, true
+          60.0f, m_screenWidth, k_fontSizeTitle, k_fontSpacing, WHITE
          ),m_screenWidth, m_screenHeight
      )
     );
@@ -112,7 +112,7 @@ AboutLayer::AboutLayer()
           (
            &m_font, k_subTitle,
            (m_screenWidth - MeasureTextEx(m_font, k_subTitle.data(), k_fontSizeSubTitle, k_fontSpacing).x) * 0.50f,
-           128.0f, m_screenWidth * 0.50f, k_fontSizeSubTitle, k_fontSpacing, WHITE, true
+           128.0f, m_screenWidth * 0.50f, k_fontSizeSubTitle, k_fontSpacing, WHITE
           )
          ),
         m_screenWidth, m_screenHeight
@@ -125,7 +125,7 @@ AboutLayer::AboutLayer()
      (
          std::make_unique<render::ImageElement>
          (
-          &m_redImage, m_screenWidth * 0.37f, m_screenHeight * 0.35f, 0.0f, 0.3f, WHITE, true
+          &m_redImage, m_screenWidth * 0.37f, m_screenHeight * 0.35f, 0.0f, 0.3f, WHITE, false
          ),
          m_screenWidth, m_screenHeight
      )
@@ -139,7 +139,7 @@ AboutLayer::AboutLayer()
          (
           std::make_unique<render::TextElement>
           (
-           &m_font, k_quotationsA, m_screenWidth * 0.125f, m_screenHeight * 0.25f, 276.0f, k_fontSizeBody, k_fontSpacing, RED, true
+           &m_font, k_quotationsA, m_screenWidth * 0.125f, m_screenHeight * 0.25f, 276.0f, k_fontSizeBody, k_fontSpacing, RED
           ),
           Fade(GREEN, 0.40f)
          ),
@@ -155,7 +155,7 @@ AboutLayer::AboutLayer()
          (
           std::make_unique<render::TextElement>
           (
-          &m_font, k_quotationsB, m_screenWidth * 0.25f, m_screenHeight * 0.55f, m_screenWidth * 0.50f, k_fontSizeBody, k_fontSpacing, GREEN, true
+          &m_font, k_quotationsB, m_screenWidth * 0.25f, m_screenHeight * 0.55f, m_screenWidth * 0.50f, k_fontSizeBody, k_fontSpacing, GREEN
           ),
           Fade(BLUE, 0.5f)
          ),
@@ -173,7 +173,7 @@ AboutLayer::AboutLayer()
          (
              std::make_unique<render::TextElement>
              (
-              &m_font, k_quotationsC, m_screenWidth * 0.15f, m_screenHeight * 0.75f, m_screenWidth * 0.75f, k_fontSizeBody, k_fontSpacing, RED, true
+              &m_font, k_quotationsC, m_screenWidth * 0.15f, m_screenHeight * 0.75f, m_screenWidth * 0.75f, k_fontSizeBody, k_fontSpacing, RED
              )
          ),
          YELLOW
@@ -234,8 +234,8 @@ void AboutLayer::OnEvent()
 
     if (IsKeyPressed(KEY_P))
     {
-        m_isPaused = !m_isPaused;
-        if (m_isPaused)
+        m_audioPaused = !m_audioPaused;
+        if (m_audioPaused)
         {
             PauseMusicStream(m_redAudio);
         }
@@ -256,10 +256,10 @@ void AboutLayer::OnUpdate(float deltatime)
     UpdateMusicStream(m_redAudio);
 
     // lerp allows smooth transition between two points: offset and target.
-    m_scrollOffset = lerp(m_scrollOffset, m_targetScroll, k_scrollSmooth * deltatime);
+    m_layerScrollOffset = lerp(m_layerScrollOffset, m_targetScroll, k_scrollSmooth * deltatime);
     for (auto& comp: m_composition)
     {
-        comp->OnUpdate(deltatime);
+        comp->OnUpdate(m_layerScrollOffset);
     }
 }
 
@@ -271,7 +271,7 @@ void AboutLayer::OnRender()
         this->DrawBackground();
         for (auto& comp: m_composition)
         {
-            comp->OnRender(m_scrollOffset);
+            comp->OnRender();
         }
     EndDrawing();
 }

@@ -21,17 +21,19 @@ private:
     const float _fontSize;
     const float _fontSpacing;
     Color       _color;
-    const bool  _isScrollable;
 
     float _textHeight;
+    float _yParentScrolloffset;
+    bool  _doScroll;
 
 public:
 
-    TextElement(const Font* font, const std::string_view text, const float xPosition, const float yPosition, const float width, const float fontSize, const float fontSpacing, Color color, bool isScrollable);
+    TextElement(const Font* font, const std::string_view text, const float xPosition, const float yPosition, const float width, const float fontSize, const float fontSpacing, Color color, bool scroll = true);
 
-    void OnRender(const float scrollOffset) const override;
+    void OnUpdate(const float scrollOffset) override;
+    void OnRender() const override;
 
-    Rectangle GetBounds(const float scrollOffset) const override;
+    Rectangle GetBounds() const override;
     void UpdateColor(const Color color) override;
 };
 }// namespace render

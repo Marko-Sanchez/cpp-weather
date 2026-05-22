@@ -8,24 +8,25 @@ namespace render
 {
 class ImageElement: public DrawableComponent
 {
-private:
+    private:
 
-    const Texture2D* _image;
-    const float      _xPosition;
-    const float      _yPosition;
-    const float      _rotation;
-    const float      _scale;
-    const bool       _isScrollable;
+        const Texture2D* _image;
+        const float      _xPosition;
+        const float      _yPosition;
+        const float      _rotation;
+        const float      _scale;
+        Color            _color;
+        float            _yParentScrollOffset;
+        const bool       _isBackground;
 
-    Color      _color;
+    public:
 
-public:
+        ImageElement(Texture2D* image, const float xPosition, const float yPosition, const float rotation, const float scale, const Color color, const bool isBackground);
 
-    ImageElement(Texture2D* image, const float xPosition, const float yPosition, const float rotation, const float scale, const Color color, const bool isScrollable);
+        void OnUpdate(const float scrollOffset) override;
+        void OnRender() const override;
 
-    void OnRender(const float scrollOffset) const override;
-
-    Rectangle GetBounds(const float scrollOffset) const override;
+        Rectangle GetBounds() const override;
 };
 }// namespace render
 #endif

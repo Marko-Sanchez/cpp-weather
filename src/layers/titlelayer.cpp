@@ -42,7 +42,7 @@ TitleLayer::TitleLayer()
     (
      std::make_unique<render::ImageElement>
      (
-      &m_backgroundTexture, k_xPositionTexture, k_yPositionTexture, 0.0f, 1.0f, WHITE, false
+      &m_backgroundTexture, k_xPositionTexture, k_yPositionTexture, 0.0f, 1.0f, WHITE, true
      )
     );
 
@@ -51,7 +51,7 @@ TitleLayer::TitleLayer()
     (
      std::make_unique<render::TextElement>
      (
-      &m_font, k_title, (m_screenWidth - titleSize.x) * 0.5f, k_yPositionTitle, m_screenWidth,  k_fontSizeTitle, k_fontSpacing, WHITE, false
+      &m_font, k_title, (m_screenWidth - titleSize.x) * 0.5f, k_yPositionTitle, m_screenWidth,  k_fontSizeTitle, k_fontSpacing, WHITE
      )
     );
 
@@ -60,7 +60,7 @@ TitleLayer::TitleLayer()
     (
      std::make_unique<render::TextElement>
      (
-      &m_font, k_credits, m_screenWidth - k_xOffsetCredits, m_screenHeight - k_yOffsetCredits, m_screenWidth,  k_fontSizeCredit, k_fontSpacing, GRAY, false
+      &m_font, k_credits, m_screenWidth - k_xOffsetCredits, m_screenHeight - k_yOffsetCredits, m_screenWidth,  k_fontSizeCredit, k_fontSpacing, GRAY
      )
     );
 }

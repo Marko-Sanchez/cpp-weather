@@ -10,9 +10,9 @@ PanelDecorator::PanelDecorator(std::unique_ptr<DrawableComponent>&& component, c
     _isRounded(isRounded)
 {}
 
-void PanelDecorator::OnRender(const float scrollOffset) const
+void PanelDecorator::OnRender() const
 {
-    auto panel = _component->GetBounds(scrollOffset);
+    auto panel = _component->GetBounds();
     if (_isRounded)
     {
         DrawRectangleRounded(panel, _panelRoundness, _panelSegments, _color);
@@ -22,7 +22,7 @@ void PanelDecorator::OnRender(const float scrollOffset) const
         DrawRectangleRec(panel, _color);
     }
 
-    _component->OnRender(scrollOffset);
+    _component->OnRender();
 }
 
 void PanelDecorator::UpdateColor(const Color color)

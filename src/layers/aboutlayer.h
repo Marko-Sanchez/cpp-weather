@@ -17,11 +17,11 @@ class AboutLayer: public Layer
         const int m_screenWidth;
         const int m_screenHeight;
 
-        float m_scrollOffset;
+        float m_layerScrollOffset;
         float m_targetScroll; // how far down the page should we be.
         float m_contentHeight;// max length to scroll down to.
 
-        bool  m_isPaused;
+        bool  m_audioPaused;
 
         Font      m_font;
         Music     m_redAudio;

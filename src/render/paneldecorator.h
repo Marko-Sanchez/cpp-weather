@@ -22,7 +22,7 @@ class PanelDecorator: public ComponentDecorator
 
         PanelDecorator(std::unique_ptr<DrawableComponent>&& component, const Color color, const bool isRounded = false);
 
-        void OnRender(const float scrollOffset) const override;
+        void OnRender() const override;
 
         void UpdateColor(const Color color) override;
 };

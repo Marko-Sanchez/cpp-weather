@@ -20,7 +20,7 @@ class ColorDecorator: public ComponentDecorator
         ColorDecorator(std::unique_ptr<DrawableComponent>&& component);
 
         void OnEvent() override;
-        void OnUpdate(const float delta) override;
+        void OnUpdate(const float scrollOffset) override;
 };
 }// namespace render
 #endif

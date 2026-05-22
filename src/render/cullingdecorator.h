@@ -17,7 +17,7 @@ class CullingDecorator: public ComponentDecorator
 
         CullingDecorator(std::unique_ptr<DrawableComponent>&& component, int width, int height);
 
-        void OnRender(const float scrollOffset) const override;
+        void OnRender() const override;
 };
 }// namespace render
 #endif

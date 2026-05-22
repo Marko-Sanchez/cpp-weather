@@ -124,7 +124,7 @@ void ForecastLayer::OnUpdate(float deltatime)
     m_layerScrollOffset = std::lerp(m_layerScrollOffset, m_targetScrollOffset, k_scrollSmooth * deltatime);
     for (auto& comp: m_compositor)
     {
-        comp->OnUpdate(deltatime);
+        comp->OnUpdate(m_layerScrollOffset);
     }
 }
 
@@ -137,7 +137,7 @@ void ForecastLayer::OnRender()
 
         for (auto& comp: m_compositor)
         {
-            comp->OnRender(m_layerScrollOffset);
+            comp->OnRender();
         }
     EndDrawing();
 }
@@ -172,7 +172,7 @@ void ForecastLayer::BuildTitle()
          std::make_unique<render::DynamicTextElement>
          (
           cityFunc, m_signal,
-          &m_font, m_weatherData.location.city, titlePos.x, titlePos.y, m_screenWidth, k_FontSizeTitle, k_FontSpacing, WHITE, true
+          &m_font, m_weatherData.location.city, titlePos.x, titlePos.y, m_screenWidth, k_FontSizeTitle, k_FontSpacing, WHITE
          ),
          m_screenWidth, m_screenHeight
      )
@@ -185,7 +185,7 @@ void ForecastLayer::BuildTitle()
          std::make_unique<render::DynamicTextElement>
          (
           tempFunc, m_signal,
-          &m_font, m_weatherData.currentTemperature, tempPos.x, tempPos.y, m_screenWidth, k_FontSizeTemp, k_FontSpacing, WHITE, true
+          &m_font, m_weatherData.currentTemperature, tempPos.x, tempPos.y, m_screenWidth, k_FontSizeTemp, k_FontSpacing, WHITE
          ),
          m_screenWidth, m_screenHeight
      )
@@ -198,7 +198,7 @@ void ForecastLayer::BuildTitle()
          std::make_unique<render::DynamicTextElement>
          (
           hlFunc, m_signal,
-          &m_font, m_highlow, hlPos.x, hlPos.y, m_screenWidth, k_FontSizeHighLow, k_FontSpacing, WHITE, true
+          &m_font, m_highlow, hlPos.x, hlPos.y, m_screenWidth, k_FontSizeHighLow, k_FontSpacing, WHITE
          ),
          m_screenWidth, m_screenHeight
      )
@@ -226,7 +226,7 @@ void ForecastLayer::BuildHourlyForecast()
           (
              std::make_unique<render::TextElement>
              (
-              &m_font, k_hourlyTitle, titlePosition.x, titlePosition.y, panel.width, k_FontSizeHourly, k_FontSpacing, WHITE, true
+              &m_font, k_hourlyTitle, titlePosition.x, titlePosition.y, panel.width, k_FontSizeHourly, k_FontSpacing, WHITE
              ),
              Fade(GRAY, 0.75f), true
           ),
@@ -234,7 +234,7 @@ void ForecastLayer::BuildHourlyForecast()
      )
     );
 
-    auto titlePanel = m_compositor.back()->GetBounds(0.0f);
+    auto titlePanel = m_compositor.back()->GetBounds();
 
     auto hourFunc = [&hourlyForecast = m_weatherData.hourlyForecast](void) {return hourlyForecast;};
     auto hourHeight {panel.height - titlePanel.height};

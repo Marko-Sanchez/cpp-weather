@@ -33,7 +33,7 @@ class HourlyStripElement: public DrawableComponent
         const float _fontSpacing;
         Color       _color;
 
-        mutable float _mutableScroll;
+        float   _yParentScrollOffset;
         float   _horizontalScrollOffset;
         Vector2 _lastMousePos;
         bool    _isDragging;
@@ -45,9 +45,10 @@ class HourlyStripElement: public DrawableComponent
         HourlyStripElement(const HourArray& forecast, std::function<HourArray(void)> provider, utility::Signal& signal, const render::WeatherIconAtlas* weatherIcons, const Font* font, const float xPosition, const float yPosition, const float viewWidth, const float viewHeight, const float fontSize, const float fonstSpacing, const Color color);
 
         void OnEvent() override;
-        void OnRender(const float scrollOffset) const override;
+        void OnUpdate(const float scrollOffset) override;
+        void OnRender() const override;
 
-        Rectangle GetBounds(const float scrollOffset) const override;
+        Rectangle GetBounds() const override;
         void UpdateColor(const Color color) override;
 };
 }// namespace render

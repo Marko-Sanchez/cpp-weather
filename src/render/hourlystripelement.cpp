@@ -41,7 +41,7 @@ HourlyStripElement::HourlyStripElement(const HourArray& forecast, std::function<
     _fontSpacing(fonstSpacing),
     _color(color)
 {
-    _mutableScroll = 0.0f;
+    _yParentScrollOffset = 0.0f;
 }
 
 void HourlyStripElement::RefreshText()
@@ -51,12 +51,11 @@ void HourlyStripElement::RefreshText()
 
 void HourlyStripElement::OnEvent()
 {
-    const Rectangle bounds {this->GetBounds(_mutableScroll)};
+    const Rectangle bounds     {this->GetBounds()};
+    const Vector2 currMousePos {GetMousePosition()};
 
     const auto totalWidth {_weatherIcons->GetIconSize() * _forecast.size()};
     const auto maxScroll  {std::max(totalWidth - _viewWidth, 0.0f)};
-
-    const Vector2 currMousePos = GetMousePosition();
 
     if (CheckBounds(currMousePos, bounds))
     {
@@ -84,13 +83,15 @@ void HourlyStripElement::OnEvent()
     _horizontalScrollOffset = std::clamp(_horizontalScrollOffset, 0.0f, maxScroll);
 }
 
-// TODO: scroll offset done in OnUpdate() instead. OnRender() no longer takes in a val.
-void HourlyStripElement::OnRender(const float scrollOffset) const
+void HourlyStripElement::OnUpdate(const float scrollOffset)
+{
+    _yParentScrollOffset = scrollOffset;
+}
+
+void HourlyStripElement::OnRender() const
 {
     // TODO: some type of check to see if _forecast data is available ?
-    // TODO: temporary for testing, requires changing
-    _mutableScroll = scrollOffset;
-    const auto yScrolled {_yPosition - scrollOffset};
+    const auto yScrolled {_yPosition - _yParentScrollOffset};
 
     const auto iconSize  {_weatherIcons->GetIconSize()};
     const auto iconScale {1.0f};
@@ -140,9 +141,9 @@ void HourlyStripElement::OnRender(const float scrollOffset) const
     EndScissorMode();
 }
 
-Rectangle HourlyStripElement::GetBounds(const float scrollOffset) const
+Rectangle HourlyStripElement::GetBounds() const
 {
-    return Rectangle {_xPosition, _yPosition - scrollOffset, _viewWidth, _viewHeight};
+    return Rectangle {_xPosition, _yPosition - _yParentScrollOffset, _viewWidth, _viewHeight};
 }
 
 void HourlyStripElement::UpdateColor(const Color color)
