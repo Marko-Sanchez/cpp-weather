@@ -28,7 +28,7 @@ class DynamicTextElement: public DrawableComponent
         float _yParentScrolloffset;
         bool _doScroll;
 
-        void RefreshText();
+        void RefreshData();
 
     public:
 

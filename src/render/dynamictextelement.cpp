@@ -6,7 +6,7 @@ namespace render
 {
 DynamicTextElement::DynamicTextElement(std::function<std::string(void)> provider, utility::Signal& signal, const Font* font, const std::string& text, const float xPosition, const float yPosition, const float textWidth, const float fontSize, const float fonstSpacing, const Color color, bool scroll)
     :_provider(provider),
-    _token(signal.Connect([this](){RefreshText();})),
+    _token(signal.Connect([this](){RefreshData();})),
     _font(font),
     _text(text),
     _xPosition(xPosition),
@@ -21,7 +21,7 @@ DynamicTextElement::DynamicTextElement(std::function<std::string(void)> provider
     _yParentScrolloffset = 0.0f;
 }
 
-void DynamicTextElement::RefreshText()
+void DynamicTextElement::RefreshData()
 {
     _text = _provider();
 }

@@ -30,7 +30,7 @@ bool CheckBounds(const Vector2& mouse, const Rectangle& rect) noexcept
 HourlyStripElement::HourlyStripElement(const HourArray& forecast, std::function<HourArray(void)> provider, utility::Signal& signal, const render::WeatherIconAtlas* weatherIcons, const Font* font, const float xPosition, const float yPosition, const float viewWidth, const float viewHeight, const float fontSize, const float fonstSpacing, const Color color)
     :_forecast(forecast),
     _provider(provider),
-    _token(signal.Connect([this](){RefreshText();})),
+    _token(signal.Connect([this](){RefreshData();})),
     _weatherIcons(weatherIcons),
     _font(font),
     _xPosition(xPosition),
@@ -44,7 +44,7 @@ HourlyStripElement::HourlyStripElement(const HourArray& forecast, std::function<
     _yParentScrollOffset = 0.0f;
 }
 
-void HourlyStripElement::RefreshText()
+void HourlyStripElement::RefreshData()
 {
     _forecast = _provider();
 }

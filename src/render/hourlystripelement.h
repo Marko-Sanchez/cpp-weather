@@ -38,7 +38,7 @@ class HourlyStripElement: public DrawableComponent
         Vector2 _lastMousePos;
         bool    _isDragging;
 
-        void RefreshText();
+        void RefreshData();
 
     public:
 
