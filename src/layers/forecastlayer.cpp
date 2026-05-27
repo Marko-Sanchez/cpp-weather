@@ -37,10 +37,12 @@ namespace
     constexpr float k_ScrollSpeed     {120.0f};
     constexpr float k_ScrollSmooth    {12.0f};
 
-    constexpr Color k_Bluish {59, 131, 223, 255};
+    constexpr Color k_Bluish  {59, 131, 223, 255};
+    constexpr Color k_Greyish {255, 255, 255, 200};
 
     constexpr std::string_view k_HourlyTitle {"24-hour forecast"};
     constexpr std::string_view k_FontPath    {"resources/fonts/UbuntuMonoNerdFontMono-Regular.ttf"};
+    constexpr std::string_view k_Footer      {"[1] Next | Scroll Wheel / Arrow keys to navigate"};
 }// anonymous namespace
 
 ForecastLayer::ForecastLayer():
@@ -56,6 +58,14 @@ m_weatherData(utility::AppState::Get().currentweather)
     this->BuildTitle();
     this->BuildHourlyForecast();
     this->BuildWeeklyForecast();
+
+    m_compositor.emplace_back
+    (
+     std::make_unique<render::TextElement>
+     (
+      &m_font, k_Footer, 10.0f, m_screenHeight - 28.0f, m_screenWidth, 10.0f, k_FontSpacing, k_Greyish, false
+     )
+    );
 }
 
 ForecastLayer::~ForecastLayer()
