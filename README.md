@@ -10,6 +10,6 @@ default application behavior displays current days hourly and next four days ave
 
 <p float="left">
     <img src="resources/images/readme-examples/title.png" width="30%" />
-    <img src="resources/images/readme-examples/example2.png" width="30%" />
     <img src="resources/images/readme-examples/example1.png" width="30%" />
+    <img src="resources/images/readme-examples/example2.png" width="30%" />
 </p>
