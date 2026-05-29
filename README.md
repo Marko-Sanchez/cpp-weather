@@ -13,3 +13,25 @@ default application behavior displays current days hourly and next four days ave
     <img src="resources/images/readme-examples/example1.png" width="30%" />
     <img src="resources/images/readme-examples/example2.png" width="30%" />
 </p>
+
+```
+cppweather --no-gui
+
+┌─ Redmond ────────────────────────────────
+│ Now: 52.6       High: 61       Low: 49
+└────────────────────────────────────────────────┘
+
+24h ▆▅▅▆▇▇▅▄▃▃▂▂▁▁▁▁▂▁▃▃▄▅▆█ Hi 53 -> Lo 55
+    3pm        2am       2pm
+```
+
+```
+cppweather --no-gui --location "Santa Cruz, California"
+
+┌─ Santa Cruz ────────────────────────────────
+│ Now: 63.0       High: 64       Low: 54
+└────────────────────────────────────────────────┘
+
+24h ▅▅▅▅▅▄▃▂▂▁▁▁▁▂▂▂▂▂▃▃▅▅▇█ Hi 64 -> Lo 71
+    3pm        2am       2pm
+```
