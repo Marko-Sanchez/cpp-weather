@@ -1,6 +1,9 @@
 #include "application.h"
 
+#include <algorithm>
+#include <charconv>
 #include <chrono>
+#include <cmath>
 #include <print>
 #include <thread>
 
@@ -11,6 +14,41 @@
 
 namespace Core
 {
+namespace
+{
+constexpr std::array<std::string_view, 8> k_Blocks =
+{
+"▁","▂","▃","▄","▅","▆","▇","█"
+};
+
+std::string UILine(std::span<const utility::HourlyForecast> hours)
+{
+    std::vector<int> values;
+    values.reserve(hours.size());
+
+    for (const auto& hour: hours)
+    {
+        int v;
+        std::from_chars(hour.temperature.data(), hour.temperature.data() + hour.temperature.size(), v);
+        values.emplace_back(v);
+    }
+
+
+    const auto [lo, hi] = std::ranges::minmax(values);
+    const double range = static_cast<double>(hi - lo);
+
+    std::string bar;
+    for (int value: values)
+    {
+        double normalized {(range > 0) ? (value - lo) / range : 0.5};
+        auto index {static_cast<std::size_t>(std::round(normalized * 7))};
+        bar += k_Blocks[index];
+    }
+
+    return bar;
+}
+}// anonymous namespace
+
 Application::Application(const std::string windowname, const std::string version, std::optional<std::pair<std::string, std::string>> stringlocation):
 m_windowname(windowname),
 m_applicationversion(version),
@@ -37,28 +75,14 @@ void Application::GetWebContents()
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         results = utility::AppState::Get().weatherslot.TryConsume();
     }
-
     auto& weatherdata = results.value();
-    std::println("Current temperature for {}: {}",weatherdata.location.city, weatherdata.currentTemperature);
 
-    std::string hf;
-    hf.reserve(512);
+    std::println("┌─ {} ────────────────────────────────", weatherdata.location.city);
+    std::println("│ Now: {:<10} High: {:<8} Low: {:<8}", weatherdata.currentTemperature, weatherdata.high, weatherdata.low);
+    std::println("└────────────────────────────────────────────────┘");
 
-    std::println("Hourly Temperatures:");
-    for (const auto& hour: weatherdata.hourlyForecast)
-    {
-        hf.append(std::format("{} : {}\t", hour.hour, hour.temperature));
-    }
-    std::println("{}", hf);
-    hf.clear();
-
-
-    std::println("Day Temperatures:");
-    for (const auto& day: weatherdata.weeklyForecast)
-    {
-        hf.append(std::format("{} : {}\t", day.day, day.mean));
-    }
-    std::println("{}", hf);
+    std::println("\n24h {} Hi {} -> Lo {}", UILine(weatherdata.hourlyForecast), weatherdata.hourlyForecast.front().temperature, weatherdata.hourlyForecast.back().temperature);
+    std::println("{:>7}{:>11}{:>10}", weatherdata.hourlyForecast[0].hour, weatherdata.hourlyForecast[11].hour, weatherdata.hourlyForecast[23].hour);
 }
 
 void Application::Run()

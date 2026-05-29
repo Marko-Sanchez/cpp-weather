@@ -12,42 +12,42 @@ namespace Core
 {
 class Application
 {
-private:
+    private:
 
-    using uLayer = std::unique_ptr<Layers::Layer>;
+        using uLayer = std::unique_ptr<Layers::Layer>;
 
-    const std::string m_windowname;
-    const std::string m_applicationversion;
+        const std::string m_windowname;
+        const std::string m_applicationversion;
 
-    Core::Network m_network;
+        Core::Network m_network;
 
-    std::shared_ptr<std::optional<Layers::TransitionLayer>> m_queuedtransition;
-    std::list<uLayer> m_layerstack;
+        std::shared_ptr<std::optional<Layers::TransitionLayer>> m_queuedtransition;
+        std::list<uLayer> m_layerstack;
 
-    std::function<void(uLayer)> TransitionLayerLambda(std::list<uLayer>::iterator iter);
+        std::function<void(uLayer)> TransitionLayerLambda(std::list<uLayer>::iterator iter);
 
-    void ProcessTransition();
-    void ProcessWeatherUpdate();
+        void ProcessTransition();
+        void ProcessWeatherUpdate();
 
-public:
+    public:
 
-    Application(const std::string windowname, const std::string version, std::optional<std::pair<std::string, std::string>> stringlocation = {});
-    ~Application();
+        Application(const std::string windowname, const std::string version, std::optional<std::pair<std::string, std::string>> stringlocation = {});
+        ~Application();
 
-    void GetWebContents();
-    void Run();
+        void GetWebContents();
+        void Run();
 
-    void OnEvent();
-    void OnUpdate(float delta);
-    void RenderLayers();
+        void OnEvent();
+        void OnUpdate(float delta);
+        void RenderLayers();
 
-    template<typename TLayer, typename ...Args>
-    requires(std::derived_from<TLayer, Layers::Layer>)
-    void PushLayer(Args&&... args)
-    {
-        auto it = m_layerstack.insert(m_layerstack.end(), std::make_unique<TLayer>(std::forward<Args>(args)...));
-        (*it)->SetTransitionCallback(TransitionLayerLambda(it));
-    }
+        template<typename TLayer, typename ...Args>
+        requires(std::derived_from<TLayer, Layers::Layer>)
+        void PushLayer(Args&&... args)
+        {
+            auto it = m_layerstack.insert(m_layerstack.end(), std::make_unique<TLayer>(std::forward<Args>(args)...));
+            (*it)->SetTransitionCallback(TransitionLayerLambda(it));
+        }
 };
 }// namespace Core
 #endif
