@@ -8,7 +8,7 @@
 #include <variant>
 
 #include "networks/networklogging.h"
-#include "utility/appstate.h"
+#include "utility/appsingleton.h"
 
 namespace Core
 {
@@ -63,7 +63,7 @@ void Network::ThreadLoop(std::stop_token stoptoken)
         const auto wr = m_weathernetwork->GetWeather();
         if (wr)
         {
-            utility::AppState::Get().weatherslot.Set(wr.value());
+            utility::AppSingleton::GetInstance().weatherslot.Set(wr.value());
         }
         else
         {

@@ -9,7 +9,7 @@
 
 #include <raylib.h>
 
-#include "utility/appstate.h"
+#include "utility/appsingleton.h"
 #include "layers/titlelayer.h"
 
 namespace Core
@@ -69,11 +69,11 @@ Application::~Application()
  */
 void Application::GetWebContents()
 {
-    auto results = utility::AppState::Get().weatherslot.TryConsume();
+    auto results = utility::AppSingleton::GetInstance().weatherslot.TryConsume();
     while (results == std::nullopt)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        results = utility::AppState::Get().weatherslot.TryConsume();
+        results = utility::AppSingleton::GetInstance().weatherslot.TryConsume();
     }
     auto& weatherdata = results.value();
 
@@ -142,14 +142,14 @@ void Application::ProcessTransition()
 */
 void Application::ProcessWeatherUpdate()
 {
-    auto data = utility::AppState::Get().weatherslot.TryConsume();
+    auto data = utility::AppSingleton::GetInstance().weatherslot.TryConsume();
     if (!data)
     {
         return;
     }
 
-    utility::AppState::Get().currentweather         = std::move(*data);
-    utility::AppState::Get().currentweather.isStale = false;
+    utility::AppSingleton::GetInstance().currentweather         = std::move(*data);
+    utility::AppSingleton::GetInstance().currentweather.isStale = false;
 }
 
 /*

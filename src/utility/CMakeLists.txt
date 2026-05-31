@@ -6,7 +6,7 @@ add_library(cppweather-utility
     logfile.h
     weatherdata.h
     threadsafeslot.h
-    appstate.h
+    appsingleton.h
     iresult.h
     errorhandling.h
     signal.h

@@ -15,7 +15,7 @@
 #include "render/textelement.h"
 #include "render/weekpanelelement.h"
 #include "utility/weatherdata.h"
-#include "utility/appstate.h"
+#include "utility/appsingleton.h"
 
 namespace Layers
 {
@@ -51,7 +51,7 @@ m_screenHeight(GetScreenHeight()),
 m_contentHeight(1500),
 m_targetScrollOffset(0.0f),
 m_layerScrollOffset(0.0f),
-m_weatherData(utility::AppState::Get().currentweather)
+m_weatherData(utility::AppSingleton::GetInstance().currentweather)
 {
     m_font = LoadFont(k_FontPath.data());
 
@@ -108,12 +108,12 @@ void ForecastLayer::OnEvent()
 void ForecastLayer::OnUpdate(float deltatime)
 {
     // isStale gets set in Application::ProcessWeatherUpdate().
-    if (!utility::AppState::Get().currentweather.isStale)
+    if (!utility::AppSingleton::GetInstance().currentweather.isStale)
     {
-        m_weatherData = utility::AppState::Get().currentweather;
+        m_weatherData = utility::AppSingleton::GetInstance().currentweather;
         m_signal.Broadcast();
 
-        utility::AppState::Get().currentweather.isStale = true;
+        utility::AppSingleton::GetInstance().currentweather.isStale = true;
     }
 
     m_layerScrollOffset = std::lerp(m_layerScrollOffset, m_targetScrollOffset, k_ScrollSmooth * deltatime);
